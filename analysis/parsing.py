@@ -143,24 +143,21 @@ def parse(fpath, out_dir, survey_key, out_prefix):
         invert_qs = [int(x) for x in survey_key["invert_qs"].split(",")]
 
     # Score each answer
-    df["ans_vals"] = df.apply(
+    df["score"] = df.apply(
         lambda x: split_and_score(
             x["question answer options"], x["answer"], x.name, survey_key, invert_qs
         ),
         axis=1,
     )
 
-    # Add sum row (probably unnecessary)
-    # df_out.loc[len(df_out.index)] = [None]*len(df.colums) + [sum(ans_vals), None, None]
-
     # Export
-    if SKIP_ANS in df["ans_vals"]:
+    if SKIP_ANS in df["score"].unique():
         df.to_csv(
             Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_SKIPPED_ANS.csv"),
             index=False,
             header=True,
         )
-    elif PARSE_ERR in df["ans_vals"]:
+    elif PARSE_ERR in df["score"].unique():
         df.to_csv(
             Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_PARSE_ERR.csv"),
             index=False,
