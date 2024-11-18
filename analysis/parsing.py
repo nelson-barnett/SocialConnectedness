@@ -2,6 +2,9 @@ import pandas as pd
 import re
 from pathlib import Path
 
+PARSE_ERR = -201
+SKIP_ANS = -101
+
 
 def score(ans_opts, answer, q_ind, score_ind, invert, invert_qs):
     """Survey scoring algorithm
@@ -31,13 +34,13 @@ def score(ans_opts, answer, q_ind, score_ind, invert, invert_qs):
             else:
                 return score_ind + ans_opts.index(answer)
         except ValueError:
-            return -1
+            return PARSE_ERR
 
 
 def split_and_score(opts, ans, q_ind, survey_key, invert_qs):
     # Catch skippable rows before extracting answer options
     if ans == "NO_ANSWER_SELECTED":
-        return -1
+        return SKIP_ANS
 
     # Beiwe separates questions with semicolon
     sc_space_sep = False
@@ -104,7 +107,7 @@ def split_and_score(opts, ans, q_ind, survey_key, invert_qs):
 
 
 # TODO: How to score if question is skipped?
-def parse(fpath, out_dir, survey_key):
+def parse(fpath, out_dir, survey_key, out_prefix):
     # Load
     df = pd.read_csv(fpath, na_filter=False)
 
@@ -151,13 +154,21 @@ def parse(fpath, out_dir, survey_key):
     # df_out.loc[len(df_out.index)] = [None]*len(df.colums) + [sum(ans_vals), None, None]
 
     # Export
-    if -1 in df["ans_vals"]:
+    if SKIP_ANS in df["ans_vals"]:
         df.to_csv(
-            Path(out_dir).joinpath(fpath.stem + "_OUT_CHECK.csv"),
+            Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_SKIPPED_ANS.csv"),
+            index=False,
+            header=True,
+        )
+    elif PARSE_ERR in df["ans_vals"]:
+        df.to_csv(
+            Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_PARSE_ERR.csv"),
             index=False,
             header=True,
         )
     else:
         df.to_csv(
-            Path(out_dir).joinpath(fpath.stem + "_OUT.csv"), index=False, header=True
+            Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT.csv"),
+            index=False,
+            header=True,
         )
