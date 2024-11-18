@@ -153,13 +153,17 @@ def parse(fpath, out_dir, survey_key, out_prefix):
     # Export
     if SKIP_ANS in df["score"].unique():
         df.to_csv(
-            Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_SKIPPED_ANS.csv"),
+            Path(out_dir).joinpath(
+                out_prefix + "_" + fpath.stem + "_OUT_SKIPPED_ANS.csv"
+            ),
             index=False,
             header=True,
         )
     elif PARSE_ERR in df["score"].unique():
         df.to_csv(
-            Path(out_dir).joinpath(out_prefix + "_" + fpath.stem + "_OUT_PARSE_ERR.csv"),
+            Path(out_dir).joinpath(
+                out_prefix + "_" + fpath.stem + "_OUT_PARSE_ERR.csv"
+            ),
             index=False,
             header=True,
         )
