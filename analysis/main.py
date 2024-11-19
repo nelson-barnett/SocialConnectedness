@@ -12,6 +12,19 @@ KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_k
 
 
 def process(data_dir, out_root, key_path, mirror_structure):
+    """Create a cleaned and scored copy of all survey CSVs in `data_dir`
+    saved in `out_root` either by survey ID (`mirror_structure` == False)
+    or in exactly the same layout as `data_dir` (`mirror_structure` == True)
+
+    Args:
+        data_dir (str): Path to root directory where data is stored
+        out_root (str): Path to directory in which data will be saved
+        key_path (str): Path to CSV key containing survey scoring rules
+        mirror_structure (bool): Flag to either mirror structure of `data_dir` or save by survey ID
+
+    Raises:
+        Exception: KeyError if survey ID does not exist in the provided key
+    """
     out_root = Path(out_root)
     out_root.mkdir(exist_ok=True)
 
@@ -40,6 +53,13 @@ def process(data_dir, out_root, key_path, mirror_structure):
 
 
 def aggregate(results_dir, key_path):
+    """Take all processed data and create a summary sheet saved to `results_dir`.
+    Requires data be saved by survey ID (process called with mirror_structure = False)
+
+    Args:
+        results_dir (str): Path to directory in which both `processed` data exists and summary sheet will be saved
+        key_path (str): Path to CSV key containing survey scoring rules
+    """
     results_dir = Path(results_dir)
     survey_key = load_key(key_path)
 
@@ -152,7 +172,7 @@ def aggregate(results_dir, key_path):
         for name, df in aggs.items():
             df.to_excel(writer, sheet_name=name, index=False)
 
-
+########### CLI ###########
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 3 and args[1] == "process":
