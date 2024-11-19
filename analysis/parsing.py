@@ -6,6 +6,15 @@ PARSE_ERR = -201
 SKIP_ANS = -101
 
 
+def load_key(fpath):
+    key = pd.read_csv(fpath).T
+    return (
+        key.rename(columns=key.loc["id"])
+        .drop(key.index[0])
+        .replace({float("nan"): None})
+    )
+
+
 def score(ans_opts, answer, q_ind, score_ind, invert, invert_qs):
     """Survey scoring algorithm
 
