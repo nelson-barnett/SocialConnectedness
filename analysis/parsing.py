@@ -38,6 +38,18 @@ def score(ans_opts, answer, q_ind, score_ind, invert, invert_qs):
 
 
 def split_and_score(opts, ans, q_ind, survey_key, invert_qs):
+    """Splits answer options and returns answer score
+
+    Args:
+        opts (str): String of answer options split by semicolons
+        ans (str): Answer for this question
+        q_ind (int): This question's number
+        survey_key (pd.DataFrame): Metadata for how to score this survey
+        invert_qs (list): List of integers for questions that should be inverted
+
+    Returns:
+        int: Scored answer
+    """
     # Catch skippable rows before extracting answer options
     if ans == "NO_ANSWER_SELECTED":
         return SKIP_ANS
@@ -106,8 +118,15 @@ def split_and_score(opts, ans, q_ind, survey_key, invert_qs):
     )
 
 
-# TODO: How to score if question is skipped?
 def parse(fpath, out_dir, survey_key, out_prefix):
+    """Parses a given survey and saves a cleaned and scored csv file
+
+    Args:
+        fpath (Path): Path to the survey file
+        out_dir (str): Path to directory in which to save data
+        survey_key (pd.DataFrame): Metadata for how to score this survey
+        out_prefix (str): String with which to prefix the saved csv
+    """
     # Load
     df = pd.read_csv(fpath, na_filter=False)
 
