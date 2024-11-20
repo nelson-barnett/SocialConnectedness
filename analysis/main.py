@@ -79,7 +79,7 @@ def aggregate(results_dir, key_path):
             # Parse datetime
             # dt = file[us_ind + 1 : file.find("+")]
             # datetime.strptime(dt, "%Y-%m-%d %H_%M_%S")
-            
+
             # Load file
             this_df = pd.read_csv(fpath, na_filter=False)
 
@@ -181,7 +181,9 @@ def aggregate(results_dir, key_path):
 
 def update(data_dir, out_root, key_path, subject_id="", survey_id=""):
     if not subject_id and not survey_id:
-        warnings.warn("No subject_id or survey_id specified. Processing and aggregating all data")
+        warnings.warn(
+            "No subject_id or survey_id specified. Processing and aggregating all data"
+        )
 
     process(data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id)
     aggregate(out_root, key_path)
@@ -226,6 +228,7 @@ def call_function_with_args(func, args):
     # Call the function with the arguments and return the result if any.
     return func(**args)
 
+
 def cli():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
@@ -262,17 +265,18 @@ def cli():
 
     # Collect args
     args = parser.parse_args()
-    
+
     # Print info
     print("Running", args.func.__name__, "with arguments:")
     for arg_name, value in vars(args).items():
         if arg_name != "func":
             print(arg_name, ": ", value, sep="")
-    
+
     # Call
     call_function_with_args(args.func, args)
 
-########### CLI ###########
+
+########### RUN ###########
 if __name__ == "__main__":
     cli()
     print("Complete!")
