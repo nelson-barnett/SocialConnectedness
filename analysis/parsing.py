@@ -33,13 +33,13 @@ def score(ans_opts, answer, q_ind, score_ind, invert, invert_qs):
     answer = answer.strip()
     try:
         if invert or (invert_qs and q_ind + 1 in invert_qs):
-            return (len(ans_opts) - int(answer)) + score_ind
+            return (len(ans_opts) - 1 - int(answer)) + score_ind
         else:
             return score_ind + int(answer)
     except ValueError:  # answer non-numeric (expected most of the time)
         try:
             if invert or (invert_qs and q_ind + 1 in invert_qs):
-                return (len(ans_opts) - ans_opts.index(answer)) + score_ind
+                return (len(ans_opts) - 1 - ans_opts.index(answer)) + score_ind
             else:
                 return score_ind + ans_opts.index(answer)
         except ValueError:

@@ -12,7 +12,6 @@ KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_k
 
 
 def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
-    # def process(args):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_root` by survey ID
 
