@@ -5,6 +5,7 @@ import pandas as pd
 import warnings
 import inspect
 import argparse
+from functools import reduce
 
 DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev"
 OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/results"
@@ -47,24 +48,29 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
         parse(file, out_dir, this_key, this_subj_id)
 
 
-def aggregate(results_dir, key_path):
-    """Take all processed data and create a summary sheet saved to `results_dir`.
+def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
+    """Take all processed data and create a summary sheet saved to `data_dir`.
 
     Args:
-        results_dir (str): Path to directory in which both `processed` data exists and summary sheet will be saved
+        data_dir (str): Path to directory in which both `processed` data exists and summary sheet will be saved
         key_path (str): Path to CSV key containing survey scoring rules
     """
-    results_dir = Path(results_dir)
+    data_dir = Path(data_dir)
     survey_key = load_key(key_path)
+
+    if not save_path:
+        save_path = data_dir
+    else:
+        save_path = Path(save_path)
 
     # Aggregate
     aggs = {}  # Dictionary of dataframes
-    summary = {}  # Dictionary (keys = subject ids) of dictionaries (keys = survey ids, values = list of survey score sums)
-    for spath in results_dir.glob("*"):
+    stats = {}  # Dictionary (keys = subject ids) of dictionaries (keys = survey ids, values = list of survey score sums)
+    for spath in data_dir.glob("*"):
         if not spath.is_dir():
             continue
         survey_name = survey_key[spath.name]["name"]
-        agg_df = []  # Reset aggregate dataframe every new survey
+        agg_list = []  # Reset aggregate dataframe every new survey
         for fpath in spath.glob("*.csv"):
             # Collect metadata
             file = fpath.stem
@@ -101,30 +107,30 @@ def aggregate(results_dir, key_path):
                         this_df.score[3:6].sum(),
                         this_df.score[6:9].sum(),
                         this_df.score[9:12].sum(),
+                        sum_field,
                     ]
-                    + [sum_field]
                 )
                 # Replace erroring subscores with nan
-                agg_df.append(
+                agg_list.append(
                     [
                         float("nan") if not isinstance(x, str) and x < 0 else x
                         for x in res
                     ]
                 )
             else:
-                agg_df.append(
+                agg_list.append(
                     [subject_id, date, time] + this_df.score.to_list() + [sum_field]
                 )
 
             # Do not add to final statistics if there is missing/bad data
             if not isinstance(sum_field, str):
-                if subject_id in summary.keys():
-                    if spath.name in summary[subject_id].keys():
-                        summary[subject_id][spath.name].append(this_df.score.sum())
+                if subject_id in stats.keys():
+                    if spath.name in stats[subject_id].keys():
+                        stats[subject_id][spath.name].append(this_df.score.sum())
                     else:
-                        summary[subject_id][spath.name] = [this_df.score.sum()]
+                        stats[subject_id][spath.name] = [this_df.score.sum()]
                 else:
-                    summary[subject_id] = {spath.name: [this_df.score.sum()]}
+                    stats[subject_id] = {spath.name: [this_df.score.sum()]}
 
         # Create column headers (add subscores for ALSFRS)
         if "ALSFRS" in survey_name:
@@ -141,15 +147,15 @@ def aggregate(results_dir, key_path):
             )
 
         # Key = readable survey name, value = dataframe of scores for every instance of this survey
-        aggs[survey_name] = pd.DataFrame(agg_df, columns=cols)
+        aggs[survey_name] = pd.DataFrame(agg_list, columns=cols)
 
-    # Extract statistics from lists of sums (that are buried in summary dict)
+    # Extract statistics from lists of sums (that are buried in stats dict)
     subj_ids = []
     surv_names = []
     n = []
     avgs = []
     stds = []
-    for s_id, survey_dicts in summary.items():
+    for s_id, survey_dicts in stats.items():
         for survey_id, survey_sum in survey_dicts.items():
             subj_ids.append(s_id)
             surv_names.append(survey_key[survey_id]["name"])
@@ -161,7 +167,7 @@ def aggregate(results_dir, key_path):
                 stds.append(float("nan"))
 
     # Build DF
-    summary_df = pd.DataFrame(
+    stats_df = pd.DataFrame(
         {
             "Subject ID": subj_ids,
             "Survey Name": surv_names,
@@ -171,9 +177,22 @@ def aggregate(results_dir, key_path):
         }
     )
 
+    # Create summary sheet with all survey data
+    summary = []
+    for name, df in aggs.items():
+        new_date = "date_" + name
+        new_time = "time_" + name
+        sum_df = df.rename(columns={"sum": name, "date": new_date, "time": new_time})
+        summary.append(sum_df[["Subject ID", new_date, new_time, name]])
+    df_merged = reduce(
+        lambda left, right: pd.merge(left, right, on=["Subject ID"], how="outer"),
+        summary,
+    )
+
     # Loop through aggregated dataframes and save to separate sheets
-    with pd.ExcelWriter(results_dir.joinpath("SUMMARY_SHEET.xlsx")) as writer:
-        summary_df.to_excel(writer, sheet_name="Summary", index=False)
+    with pd.ExcelWriter(save_path.joinpath(out_name + ".xlsx")) as writer:
+        df_merged.to_excel(writer, sheet_name="Summary", index=False)
+        stats_df.to_excel(writer, sheet_name="Stats", index=False)
         for name, df in aggs.items():
             df.to_excel(writer, sheet_name=name, index=False)
 
@@ -249,8 +268,10 @@ def cli():
 
     # Aggregate
     parser_agg = subparsers.add_parser("aggregate")
-    parser_agg.add_argument("-d", "--results_dir", type=str, default=OUT_ROOT)
+    parser_agg.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT)
     parser_agg.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
+    parser_agg.add_argument("-o", "--out_name", type=str, default="SUMMARY_SHEET")
+    parser_agg.add_argument("-s", "--save_path", type=str, default="")
     parser_agg.set_defaults(func=aggregate)
 
     # Update
