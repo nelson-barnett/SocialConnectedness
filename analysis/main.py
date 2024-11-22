@@ -36,10 +36,8 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
 
         this_subj_id = file.parent.parent.parent.name
 
-        if (
-            (this_key["index"] is None and this_key["invert"] is None)
-            or (subject_id and this_subj_id != subject_id)
-            or (survey_id and file.parent.name != survey_id)
+        if (subject_id and this_subj_id != subject_id) or (
+            survey_id and file.parent.name != survey_id
         ):
             continue
 
@@ -47,7 +45,11 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
         out_dir.mkdir(exist_ok=True, parents=True)
         this_survey = Survey(file, key=this_key, subject_id=this_subj_id)
 
-        this_survey.parse()
+        # If there is no scoring to be done, just clean and save survey
+        if this_key["index"] is None and this_key["invert"] is None:
+            this_survey.clean(minimal=True)
+        else:
+            this_survey.parse_and_score()
         this_survey.export(out_dir)
 
 
@@ -90,18 +92,25 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
 
             # Load file
             this_df = pd.read_csv(fpath, na_filter=False)
+            is_nonnumeric = "score" not in this_df.columns
 
             # Establish sum
             if fpath.stem.endswith("PARSE_ERR"):
                 sum_field = "PARSING ERROR"
             elif fpath.stem.endswith("SKIPPED_ANS"):
                 sum_field = "SKIPPED ANSWER"
+            elif is_nonnumeric:
+                sum_field = "NON-NUMERIC SURVEY"
             else:
                 sum_field = this_df.score.sum()
 
             # Add this survey's data to aggregate "dataframe" (list, really)
             # Get subscores if ALSFRS
-            if "ALSFRS" in survey_name:
+            if is_nonnumeric:
+                agg_list.append(
+                    [subject_id, date, time] + this_df.answer.to_list() + [sum_field]
+                )
+            elif "ALSFRS" in survey_name:
                 res = (
                     [subject_id, date, time]
                     + this_df.score.to_list()
