@@ -1,11 +1,11 @@
-from parsing import parse, load_key
+from survey import Survey
 from pathlib import Path
 import statistics
 import pandas as pd
 import warnings
-import inspect
 import argparse
 from functools import reduce
+from utils import call_function_with_args, load_key
 
 DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev"
 OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/results"
@@ -27,10 +27,10 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
     out_root = Path(out_root)
     out_root.mkdir(exist_ok=True)
 
-    survey_key = load_key(key_path)
+    key_df = load_key(key_path)
     for file in Path(data_dir).glob("[!results]**/**/*.csv"):
         try:
-            this_key = survey_key[file.parent.name]
+            this_key = key_df[file.parent.name]
         except KeyError:
             raise Exception("Survey ID not found in key.")
 
@@ -45,7 +45,10 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
 
         out_dir = out_root.joinpath(file.parent.name)
         out_dir.mkdir(exist_ok=True, parents=True)
-        parse(file, out_dir, this_key, this_subj_id)
+        this_survey = Survey(file, key=this_key, subject_id=this_subj_id)
+
+        this_survey.parse()
+        this_survey.export(out_dir)
 
 
 def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
@@ -64,7 +67,7 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
         save_path = Path(save_path)
 
     # Aggregate
-    aggs = {}  # Dictionary of dataframes
+    aggs_dict = {}  # Dictionary of dataframes
     stats = {}  # Dictionary (keys = subject ids) of dictionaries (keys = survey ids, values = list of survey score sums)
     for spath in data_dir.glob("*"):
         if not spath.is_dir():
@@ -147,7 +150,7 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
             )
 
         # Key = readable survey name, value = dataframe of scores for every instance of this survey
-        aggs[survey_name] = pd.DataFrame(agg_list, columns=cols)
+        aggs_dict[survey_name] = pd.DataFrame(agg_list, columns=cols)
 
     # Extract statistics from lists of sums (that are buried in stats dict)
     subj_ids = []
@@ -179,7 +182,7 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
 
     # Create summary sheet with all survey data
     summary = []
-    for name, df in aggs.items():
+    for name, df in aggs_dict.items():
         new_date = "date_" + name
         new_time = "time_" + name
         sum_df = df.rename(columns={"sum": name, "date": new_date, "time": new_time})
@@ -193,7 +196,7 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
     with pd.ExcelWriter(save_path.joinpath(out_name + ".xlsx")) as writer:
         df_merged.to_excel(writer, sheet_name="Summary", index=False)
         stats_df.to_excel(writer, sheet_name="Stats", index=False)
-        for name, df in aggs.items():
+        for name, df in aggs_dict.items():
             df.to_excel(writer, sheet_name=name, index=False)
 
 
@@ -205,46 +208,6 @@ def update(data_dir, out_root, key_path, subject_id="", survey_id=""):
 
     process(data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id)
     aggregate(out_root, key_path)
-
-
-def call_function_with_args(func, args):
-    """
-    Call the function with the arguments extracted from the argparse.Namespace object.
-    FROM: https://gist.github.com/amarao/36327a6f77b86b90c2bca72ba03c9d3a
-
-    Args:
-        func: The function to call.
-        args: The argparse.Namespace object containing the arguments.
-
-    Returns:
-        Any: The result of the function call.
-
-    Author:
-        Laurent DECLERCQ, AGON PARTNERS INNOVATION <l.declercq@konzeptplus.ch>
-    """
-    # Let's inspect the signature of the function so that we can call it with the correct arguments.
-    # We make use of the inspect module to get the function signature.
-    signature = inspect.signature(func)
-
-    # Get the parameters of the function using a dictionary comprehension.
-    # Note: Could be enhanced to handle edge cases (default values, *args, **kwargs, etc.)
-    args = {parameter: getattr(args, parameter) for parameter in signature.parameters}
-
-    # Type cast the arguments to the correct type according to the function signature. We use the annotation of the
-    # parameter to cast the argument. If the annotation is empty, we keep the argument as is. We only process the
-    # arguments that are in the function signature.
-    args = {
-        parameter: (
-            signature.parameters[parameter].annotation(args[parameter])
-            if signature.parameters[parameter].annotation is not inspect.Parameter.empty
-            else args[parameter]
-        )
-        for parameter in args
-        if parameter in signature.parameters
-    }
-
-    # Call the function with the arguments and return the result if any.
-    return func(**args)
 
 
 def cli():
