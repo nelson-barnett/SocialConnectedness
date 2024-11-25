@@ -79,22 +79,22 @@ class Survey(object):
             except ValueError:
                 return self.parse_err
 
-    def eval_question(self, opts, ans, q_num):
+    def eval_question(self, opts, ans, q_num, score_flag):
         """Splits answer options and returns answer score
 
         Args:
             opts (str): String of answer options split by semicolons
             ans (str): Answer for this question
             q_num (int): This question's number
-            survey_key (pd.DataFrame): Metadata for how to score this survey
-            invert_qs (list): List of integers for questions that should be inverted
 
         Returns:
             int: Scored answer
         """
 
         # Catch skippable rows before extracting answer options
-        if ans == "NO_ANSWER_SELECTED":
+        if not score_flag:
+            return None 
+        elif ans == "NO_ANSWER_SELECTED":
             return self.skip_ans
 
         # Beiwe separates questions with semicolon
@@ -162,6 +162,11 @@ class Survey(object):
         return self.score(ans_opts, ans, q_num)
 
     def clean(self, minimal=False):
+        """Cleans the survey dataframe by removing brackets and dropping rows that are not numerically scored.
+
+        Args:
+            minimal (bool, optional): _description_. Defaults to False.
+        """
         # TODO: Make this one method call. For some reason, listing the column names doesn't work
         # EX: self.df[["question answer options", "answer"]].apply(lambda x: x.replace("[","").replace("]",""))
         self.df["question answer options"] = self.df["question answer options"].apply(
@@ -201,17 +206,44 @@ class Survey(object):
             )
         self.df.reset_index(drop=True, inplace=True)
 
+    def mark_to_score(self):
+        score_flag = [True] * len(self.df)
+        idx = self.df.loc[
+            (self.df["answer"] == "NOT_PRESENTED")
+            | (
+                (self.df["answer"] == "NO_ANSWER_SELECTED")
+                & (
+                    self.df["question text"]
+                    .str.lower()
+                    .str.startswith("(only answer if")
+                )
+            )
+            | (
+                self.df["question answer options"]
+                .str.lower()
+                .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
+            )
+        ].index
+        
+        for index in idx.array:
+            score_flag[index] = False
+        
+        self.df["score_flag"] = score_flag
+
     def parse_and_score(self):
         """Parses a given survey and saves a cleaned and scored csv file"""
-        self.clean()
+        self.clean(minimal=True)
+        self.mark_to_score()
 
         # Score each answer
         self.df["score"] = self.df.apply(
             lambda x: self.eval_question(
-                x["question answer options"], x["answer"], x.name
+                x["question answer options"], x["answer"], x.name, x["score_flag"]
             ),
             axis=1,
         )
+        
+        self.df.drop("score_flag", axis=1, inplace=True)
 
     def export(self, out_dir, out_prefix=""):
         if not out_prefix:

@@ -102,6 +102,7 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
             elif is_nonnumeric:
                 sum_field = "NON-NUMERIC SURVEY"
             else:
+                this_df.score = pd.to_numeric(this_df.score, errors="coerce")
                 sum_field = this_df.score.sum()
 
             # Add this survey's data to aggregate "dataframe" (list, really)
@@ -202,7 +203,11 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
     )
 
     # Loop through aggregated dataframes and save to separate sheets
-    with pd.ExcelWriter(save_path.joinpath(out_name + ".xlsx")) as writer:
+    with pd.ExcelWriter(
+        save_path.joinpath(out_name + ".xlsx"),
+        engine="xlsxwriter",
+        engine_kwargs={"options": {"strings_to_numbers": True}},
+    ) as writer:
         df_merged.to_excel(writer, sheet_name="Summary", index=False)
         stats_df.to_excel(writer, sheet_name="Stats", index=False)
         for name, df in aggs_dict.items():
