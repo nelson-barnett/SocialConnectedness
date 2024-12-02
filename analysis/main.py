@@ -6,9 +6,10 @@ import warnings
 import argparse
 from functools import reduce
 from utils import call_function_with_args, load_key
+from acoustic import process_spa
 
-DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev"
-OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/results"
+DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
+OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
 
 
@@ -222,6 +223,20 @@ def update(data_dir, out_root, key_path, subject_id="", survey_id=""):
 
     process(data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id)
     aggregate(out_root, key_path)
+
+
+def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_id=""):
+    out_path = Path(out_path)
+    out_path.mkdir(exist_ok=True)
+
+    df_list = []
+    for file in Path(data_dir).glob("[!results]**/**/*.xlsx"):
+        if subject_id and subject_id != file.stem[0 : file.stem.find("_")]:
+            continue
+        df_list.append(process_spa(file))
+
+    df = pd.concat(df_list, axis=0)
+    df.to_excel(out_path + out_name + ".xlsx", index=False)
 
 
 def cli():

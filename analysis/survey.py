@@ -20,10 +20,9 @@ class Survey(object):
         self.skip_ans = skip_ans
         self.file = Path(file)
         self.subject_id = subject_id
-
-        if not id:
-            # No need for checks here because errors will appear in key validation
-            self.id = file.parent.name
+        
+        # No need for checks here because errors will appear in key validation
+        self.id = id if id else file.parent.name
 
         # key supersedes key_path if both are passed
         if not key.empty or not key_path:
