@@ -4,16 +4,18 @@ import statistics
 import pandas as pd
 import warnings
 import argparse
+from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from functools import reduce
 from utils import call_function_with_args, load_key
 from acoustic import process_spa
+from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
 DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
 OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
 
 
-def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
+def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_root` by survey ID
 
@@ -54,7 +56,7 @@ def process(data_dir, out_root, key_path, subject_id="", survey_id=""):
         this_survey.export(out_dir)
 
 
-def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
+def aggregate_survey(data_dir, key_path, out_name="SURVEY_SUMMARY", save_path=""):
     """Take all processed data and create a summary sheet saved to `data_dir`.
 
     Args:
@@ -215,14 +217,16 @@ def aggregate(data_dir, key_path, out_name="SUMMARY_SHEET", save_path=""):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def update(data_dir, out_root, key_path, subject_id="", survey_id=""):
+def update_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
     if not subject_id and not survey_id:
         warnings.warn(
             "No subject_id or survey_id specified. Processing and aggregating all data"
         )
 
-    process(data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id)
-    aggregate(out_root, key_path)
+    process_survey(
+        data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id
+    )
+    aggregate_survey(out_root, key_path)
 
 
 def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_id=""):
@@ -239,41 +243,116 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
     df.to_excel(out_path + out_name + ".xlsx", index=False)
 
 
+def process_gps(data_dir, out_dir):
+    gps_stats_main(data_dir, out_dir, "America/New_York", Frequency.HOURLY, True)
+
+
+def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
+    out_path = Path(out_path)
+    out_path.mkdir(exist_ok=True)
+
+    df_list = []
+    for file in Path(data_dir).glob("[!results]**/**/*.csv"):
+        if subject_id and subject_id != file.stem:
+            continue
+        df = pd.read_csv(file)
+        is_cont, start_day, end_day = find_n_cont_days(df, n=30)
+
+        if is_cont:
+            obs_day_start = day_to_obs_day(df, start_day)
+            obs_day_end = day_to_obs_day(df, end_day)
+        else:
+            obs_day_start = obs_day_end = None
+
+        df_avg = df.drop(["year", "month", "day", "hour"], axis=1).mean()
+        df_list.append(
+            df_avg.assign(
+                thirty_days_continuous=is_cont,
+                continuous_obs_start_day=date_series_to_str(start_day),
+                continuous_obs_end_day=date_series_to_str(end_day),
+                continuous_obs_start_study_date=obs_day_start,
+                continuous_obs_end_study_date=obs_day_end,
+            )
+        )
+    df_out = pd.concat(df_list, axis=0)
+    df_out.to_csv(out_path + out_name + ".csv", index=False, header=True)
+
+
 def cli():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    # Process
-    parser_process = subparsers.add_parser("process")
-    parser_process.add_argument(
+    # Process Survey
+    parser_process_survey = subparsers.add_parser("process_survey")
+    parser_process_survey.add_argument(
         "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
     )
-    parser_process.add_argument(
+    parser_process_survey.add_argument(
         "-o", "--out_root", type=str, nargs="?", default=OUT_ROOT
     )
-    parser_process.add_argument(
+    parser_process_survey.add_argument(
         "-k", "--key_path", type=str, nargs="?", default=KEY_PATH
     )
-    parser_process.add_argument("--subject_id", type=str, nargs="?", default="")
-    parser_process.add_argument("--survey_id", type=str, nargs="?", default="")
-    parser_process.set_defaults(func=process)
+    parser_process_survey.add_argument("--subject_id", type=str, nargs="?", default="")
+    parser_process_survey.add_argument("--survey_id", type=str, nargs="?", default="")
+    parser_process_survey.set_defaults(func=process_survey)
 
-    # Aggregate
-    parser_agg = subparsers.add_parser("aggregate")
-    parser_agg.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT)
-    parser_agg.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
-    parser_agg.add_argument("-o", "--out_name", type=str, default="SUMMARY_SHEET")
-    parser_agg.add_argument("-s", "--save_path", type=str, default="")
-    parser_agg.set_defaults(func=aggregate)
+    # Aggregate Survey
+    parser_agg_survey = subparsers.add_parser("aggregate_survey")
+    parser_agg_survey.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT)
+    parser_agg_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
+    parser_agg_survey.add_argument(
+        "-o", "--out_name", type=str, default="SURVEY_SUMMARY"
+    )
+    parser_agg_survey.add_argument("-s", "--save_path", type=str, default="")
+    parser_agg_survey.set_defaults(func=aggregate_survey)
 
-    # Update
-    parser_update = subparsers.add_parser("update")
-    parser_update.add_argument("-d", "--data_dir", type=str, default=DATA_DIR)
-    parser_update.add_argument("-o", "--out_root", type=str, default=OUT_ROOT)
-    parser_update.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
-    parser_update.add_argument("--subject_id", type=str, default="")
-    parser_update.add_argument("--survey_id", type=str, default="")
-    parser_update.set_defaults(func=update)
+    # Update Survey
+    parser_update_survey = subparsers.add_parser("update_survey")
+    parser_update_survey.add_argument("-d", "--data_dir", type=str, default=DATA_DIR)
+    parser_update_survey.add_argument("-o", "--out_root", type=str, default=OUT_ROOT)
+    parser_update_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
+    parser_update_survey.add_argument("--subject_id", type=str, default="")
+    parser_update_survey.add_argument("--survey_id", type=str, default="")
+    parser_update_survey.set_defaults(func=update_survey)
+
+    # Aggregate_acoustic
+    parser_agg_ac = subparsers.add_parser("aggregate_acoustic")
+    parser_agg_ac.add_argument(
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+    )
+    parser_agg_ac.add_argument(
+        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT
+    )
+    parser_agg_ac.add_argument(
+        "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
+    )
+    parser_agg_ac.add_argument("--subject_id", type=str, nargs="?", default="")
+    parser_agg_ac.set_defaults(func=aggregate_acoustic)
+
+    # Process GPS
+    parser_process_gps = subparsers.add_parser("process_gps")
+    parser_process_gps.add_argument(
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+    )
+    parser_process_gps.add_argument(
+        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT
+    )
+    parser_process_gps.set_defaults(func=process_gps)
+
+    # Aggregate GPS
+    parser_agg_gps = subparsers.add_parser("aggregate_gps")
+    parser_agg_gps.add_argument(
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+    )
+    parser_agg_gps.add_argument(
+        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT
+    )
+    parser_agg_gps.add_argument(
+        "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
+    )
+    parser_agg_gps.add_argument("--subject_id", type=str, nargs="?", default="")
+    parser_agg_gps.set_defaults(func=aggregate_gps)
 
     # Collect args
     args = parser.parse_args()
