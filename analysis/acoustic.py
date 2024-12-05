@@ -17,7 +17,7 @@ def get_subject_id(df):
 
 def get_date(df):
     fname = df["File Name"][0]
-    return fname[re.search("Bamboo_", fname).end(), fname.find(" ")]
+    return fname[re.search("Bamboo_", fname).end() : fname.find(" ")]
 
 
 def process_spa(fpath):
@@ -40,8 +40,9 @@ def process_spa(fpath):
     df.insert(0, "ID", get_subject_id(df))
     df["SR"] = get_speaking_rate(df)
     df["AR"] = get_artic_rate(df)
-    df.rename(
-        {
+
+    return df.rename(
+        columns={
             "%Pause": "PAUSE_PERC",
             "%Speech": "SPEECH_PERC",
             "Pause_duration": "PAUSE_DIR",
@@ -49,6 +50,5 @@ def process_spa(fpath):
             "Total_duration": "TOT_DUR",
             "Pause_events": "PAUSE_EVENTS",
             "Speech_events": "SPEECH_EVENTS",
-        }
-    )
-    return df.drop("File Name", axis=1)
+        },
+    ).drop("File Name", axis=1)

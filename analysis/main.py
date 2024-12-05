@@ -10,8 +10,15 @@ from utils import call_function_with_args, load_key
 from acoustic import process_spa
 from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
-DATA_DIR = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
-OUT_ROOT = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
+DATA_DIR_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
+OUT_ROOT_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
+
+DATA_DIR_GPS = "L:/Research Project Current/Social Connectedness/Nelson/additional test GPS"
+OUT_ROOT_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/GPS downloaded from Biewe/results"
+
+DATA_DIR_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data/spa_outputs"
+OUT_ROOT_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data"
+
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
 
 
@@ -234,13 +241,13 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
     out_path.mkdir(exist_ok=True)
 
     df_list = []
-    for file in Path(data_dir).glob("[!results]**/**/*.xlsx"):
+    for file in Path(data_dir).glob("**/*.xlsx"):
         if subject_id and subject_id != file.stem[0 : file.stem.find("_")]:
             continue
         df_list.append(process_spa(file))
 
     df = pd.concat(df_list, axis=0)
-    df.to_excel(out_path + out_name + ".xlsx", index=False)
+    df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
 
 
 def process_gps(data_dir, out_dir):
@@ -285,10 +292,10 @@ def cli():
     # Process Survey
     parser_process_survey = subparsers.add_parser("process_survey")
     parser_process_survey.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_SURVEY
     )
     parser_process_survey.add_argument(
-        "-o", "--out_root", type=str, nargs="?", default=OUT_ROOT
+        "-o", "--out_root", type=str, nargs="?", default=OUT_ROOT_SURVEY
     )
     parser_process_survey.add_argument(
         "-k", "--key_path", type=str, nargs="?", default=KEY_PATH
@@ -299,7 +306,7 @@ def cli():
 
     # Aggregate Survey
     parser_agg_survey = subparsers.add_parser("aggregate_survey")
-    parser_agg_survey.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT)
+    parser_agg_survey.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT_SURVEY)
     parser_agg_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_agg_survey.add_argument(
         "-o", "--out_name", type=str, default="SURVEY_SUMMARY"
@@ -309,8 +316,8 @@ def cli():
 
     # Update Survey
     parser_update_survey = subparsers.add_parser("update_survey")
-    parser_update_survey.add_argument("-d", "--data_dir", type=str, default=DATA_DIR)
-    parser_update_survey.add_argument("-o", "--out_root", type=str, default=OUT_ROOT)
+    parser_update_survey.add_argument("-d", "--data_dir", type=str, default=DATA_DIR_SURVEY)
+    parser_update_survey.add_argument("-o", "--out_root", type=str, default=OUT_ROOT_SURVEY)
     parser_update_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_update_survey.add_argument("--subject_id", type=str, default="")
     parser_update_survey.add_argument("--survey_id", type=str, default="")
@@ -319,10 +326,10 @@ def cli():
     # Aggregate_acoustic
     parser_agg_ac = subparsers.add_parser("aggregate_acoustic")
     parser_agg_ac.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_ACOUSTIC
     )
     parser_agg_ac.add_argument(
-        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT
+        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT_ACOUSTIC
     )
     parser_agg_ac.add_argument(
         "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
@@ -333,20 +340,20 @@ def cli():
     # Process GPS
     parser_process_gps = subparsers.add_parser("process_gps")
     parser_process_gps.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_GPS
     )
     parser_process_gps.add_argument(
-        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT
+        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
     )
     parser_process_gps.set_defaults(func=process_gps)
 
     # Aggregate GPS
     parser_agg_gps = subparsers.add_parser("aggregate_gps")
     parser_agg_gps.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR
+        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_GPS
     )
     parser_agg_gps.add_argument(
-        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT
+        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT_GPS
     )
     parser_agg_gps.add_argument(
         "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
