@@ -250,8 +250,8 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
     df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
 
 
-def process_gps(data_dir, out_dir):
-    gps_stats_main(data_dir, out_dir, "America/New_York", Frequency.HOURLY, True)
+def process_gps(data_dir, out_dir, subject_ids):
+    gps_stats_main(data_dir, out_dir, "America/New_York", Frequency.HOURLY, True, participant_ids=subject_ids)
 
 
 def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
@@ -259,8 +259,9 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
     out_path.mkdir(exist_ok=True)
 
     df_list = []
-    for file in Path(data_dir).glob("[!results]**/**/*.csv"):
-        if subject_id and subject_id != file.stem:
+    for file in Path(data_dir).glob("**/*.csv"):
+        this_id = file.stem
+        if subject_id and subject_id != this_id:
             continue
         df = pd.read_csv(file)
         is_cont, start_day, end_day = find_n_cont_days(df, n=30)
@@ -268,21 +269,24 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
         if is_cont:
             obs_day_start = day_to_obs_day(df, start_day)
             obs_day_end = day_to_obs_day(df, end_day)
+            cont_obs_day_start = date_series_to_str(start_day)
+            cont_obs_day_end = date_series_to_str(end_day)
         else:
-            obs_day_start = obs_day_end = None
+            obs_day_start = obs_day_end = cont_obs_day_start = cont_obs_day_end = None
 
-        df_avg = df.drop(["year", "month", "day", "hour"], axis=1).mean()
+        df_avg = df.drop(["year", "month", "day", "hour"], axis=1).mean().to_frame().T.add_suffix("_mean")
+        df_avg.insert(0, "subject_id", this_id)
         df_list.append(
             df_avg.assign(
                 thirty_days_continuous=is_cont,
-                continuous_obs_start_day=date_series_to_str(start_day),
-                continuous_obs_end_day=date_series_to_str(end_day),
+                continuous_obs_start_date=cont_obs_day_start,
+                continuous_obs_end_date=cont_obs_day_end,
                 continuous_obs_start_study_date=obs_day_start,
                 continuous_obs_end_study_date=obs_day_end,
             )
         )
     df_out = pd.concat(df_list, axis=0)
-    df_out.to_csv(out_path + out_name + ".csv", index=False, header=True)
+    df_out.to_csv(out_path.joinpath(out_name + ".csv"), index=False, header=True)
 
 
 def cli():
@@ -345,6 +349,7 @@ def cli():
     parser_process_gps.add_argument(
         "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
     )
+    parser_process_gps.add_argument("--subject_ids", nargs="?", default=None)
     parser_process_gps.set_defaults(func=process_gps)
 
     # Aggregate GPS

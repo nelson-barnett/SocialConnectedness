@@ -73,7 +73,7 @@ def day_to_obs_day(df, day):
         int: Observation day (0-indexed)
     """
     df_grouped = df.groupby(["year", "month", "day"]).size().reset_index()
-    idx = df_grouped.index[(df_grouped[["year", "month", "day"]] == day).all(axis=1)][0]
+    idx = df_grouped.index[(df_grouped[["year", "month", "day"]] == day).all(axis=1)]
 
     if idx.empty:
         raise Exception(
