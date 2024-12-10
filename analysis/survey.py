@@ -20,7 +20,7 @@ class Survey(object):
         self.skip_ans = skip_ans
         self.file = Path(file)
         self.subject_id = subject_id
-        
+
         # No need for checks here because errors will appear in key validation
         self.id = id if id else file.parent.name
 
@@ -92,7 +92,7 @@ class Survey(object):
 
         # Catch skippable rows before extracting answer options
         if not score_flag:
-            return None 
+            return None
         elif ans == "NO_ANSWER_SELECTED":
             return self.skip_ans
 
@@ -223,10 +223,10 @@ class Survey(object):
                 .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
             )
         ].index
-        
+
         for index in idx.array:
             score_flag[index] = False
-        
+
         self.df["score_flag"] = score_flag
 
     def parse_and_score(self):
@@ -235,13 +235,17 @@ class Survey(object):
         self.mark_to_score()
 
         # Score each answer
-        self.df["score"] = self.df.apply(
-            lambda x: self.eval_question(
-                x["question answer options"], x["answer"], x.name, x["score_flag"]
-            ),
-            axis=1,
-        )
-        
+        self.df["score"] = [
+            self.eval_question(opts, ans, q_num, score_flag)
+            for q_num, (opts, ans, score_flag) in enumerate(
+                zip(
+                    self.df["question answer options"],
+                    self.df["answer"],
+                    self.df["score_flag"],
+                )
+            )
+        ]
+
         self.df.drop("score_flag", axis=1, inplace=True)
 
     def export(self, out_dir, out_prefix=""):
