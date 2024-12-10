@@ -6,18 +6,26 @@ import warnings
 import argparse
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from functools import reduce
-from utils import call_function_with_args, load_key
+from utils import call_function_with_args, load_key, excel_style
 from acoustic import process_spa
 from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
-DATA_DIR_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
-OUT_ROOT_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
+DATA_DIR_SURVEY = (
+    "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
+)
+OUT_ROOT_SURVEY = (
+    "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
+)
 
-DATA_DIR_GPS = "L:/Research Project Current/Social Connectedness/Nelson/additional test GPS"
+DATA_DIR_GPS = (
+    "L:/Research Project Current/Social Connectedness/Nelson/additional test GPS"
+)
 OUT_ROOT_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/GPS downloaded from Biewe/results"
 
 DATA_DIR_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data/spa_outputs"
-OUT_ROOT_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data"
+OUT_ROOT_ACOUSTIC = (
+    "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data"
+)
 
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
 
@@ -38,7 +46,7 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
     out_root.mkdir(exist_ok=True)
 
     key_df = load_key(key_path)
-    for file in Path(data_dir).glob("[!results]**/**/*.csv"):
+    for file in Path(data_dir).glob("**/*.csv"):
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
@@ -63,7 +71,7 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
         this_survey.export(out_dir)
 
 
-def aggregate_survey(data_dir, key_path, out_name="SURVEY_SUMMARY", save_path=""):
+def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
     """Take all processed data and create a summary sheet saved to `data_dir`.
 
     Args:
@@ -72,11 +80,6 @@ def aggregate_survey(data_dir, key_path, out_name="SURVEY_SUMMARY", save_path=""
     """
     data_dir = Path(data_dir)
     survey_key = load_key(key_path)
-
-    if not save_path:
-        save_path = data_dir
-    else:
-        save_path = Path(save_path)
 
     # Aggregate
     aggs_dict = {}  # Dictionary of dataframes
@@ -214,7 +217,7 @@ def aggregate_survey(data_dir, key_path, out_name="SURVEY_SUMMARY", save_path=""
 
     # Loop through aggregated dataframes and save to separate sheets
     with pd.ExcelWriter(
-        save_path.joinpath(out_name + ".xlsx"),
+        Path(out_path).joinpath(out_name + ".xlsx"),
         engine="xlsxwriter",
         engine_kwargs={"options": {"strings_to_numbers": True}},
     ) as writer:
@@ -233,7 +236,7 @@ def update_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
     process_survey(
         data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id
     )
-    aggregate_survey(out_root, key_path)
+    aggregate_survey(data_dir, out_root, key_path)
 
 
 def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_id=""):
@@ -247,11 +250,50 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
         df_list.append(process_spa(file))
 
     df = pd.concat(df_list, axis=0)
-    df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
+
+    # Add conditional formatting if there is a flag column
+    # Prevents erroring if no analyst added a flag
+    if "flag" in df.columns.str.lower():
+        # Prep
+        writer = pd.ExcelWriter(
+            out_path.joinpath(out_name + ".xlsx"), engine="xlsxwriter"
+        )
+        df.to_excel(writer, sheet_name="Sheet1", index=False)
+
+        workbook = writer.book
+        worksheet = writer.sheets["Sheet1"]
+
+        # Convert index of first flag value to excel notation
+        excel_col_flag = excel_style(2, df.columns.str.lower().get_loc("flag") + 1)
+
+        # Makes the font color of the whole row red if the "flag" column == "y"
+        format1 = workbook.add_format({"font_color": "#FF0000"})
+        worksheet.conditional_format(
+            1,
+            0,
+            df.shape[0],
+            df.shape[1] - 1,
+            {
+                "type": "formula",
+                "criteria": f'=${excel_col_flag}="y"',
+                "format": format1,
+            },
+        )
+
+        writer.close()
+    else:
+        df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
 
 
 def process_gps(data_dir, out_dir, subject_ids):
-    gps_stats_main(data_dir, out_dir, "America/New_York", Frequency.HOURLY, True, participant_ids=subject_ids)
+    gps_stats_main(
+        data_dir,
+        out_dir,
+        "America/New_York",
+        Frequency.HOURLY,
+        True,
+        participant_ids=subject_ids,
+    )
 
 
 def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
@@ -274,7 +316,12 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
         else:
             obs_day_start = obs_day_end = cont_obs_day_start = cont_obs_day_end = None
 
-        df_avg = df.drop(["year", "month", "day", "hour"], axis=1).mean().to_frame().T.add_suffix("_mean")
+        df_avg = (
+            df.drop(["year", "month", "day", "hour"], axis=1)
+            .mean()
+            .to_frame()
+            .T.add_suffix("_mean")
+        )
         df_avg.insert(0, "subject_id", this_id)
         df_list.append(
             df_avg.assign(
@@ -287,6 +334,31 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
         )
     df_out = pd.concat(df_list, axis=0)
     df_out.to_csv(out_path.joinpath(out_name + ".csv"), index=False, header=True)
+
+
+def combine_summaries(
+    out_dir, acoustic_path="", gps_path="", survey_path="", out_name="COMBINED_SUMMARY"
+):
+    paths = [acoustic_path, gps_path, survey_path]
+    if paths.count("") > 2:
+        print(
+            "Must supply at least two valid paths to summary sheet to create a combined file"
+        )
+        return
+
+    with pd.ExcelWriter(Path(out_dir).joinpath(out_name + ".xlsx")) as writer:
+        for file in paths:
+            file = Path(file)
+            if file.suffix == ".xlsx":
+                this_file = pd.ExcelFile(file)
+                sheets = this_file.sheet_names
+                for sheet in sheets:
+                    this_sheet_name = sheet if len(sheets) > 1 else file.stem.lower()
+                    df = this_file.parse(sheet_name=sheet)
+                    df.to_excel(writer, sheet_name=f"{this_sheet_name}", index=False)
+            else:  # csv
+                df = pd.read_csv(file)
+                df.to_excel(writer, sheet_name=f"{file.stem.lower()}", index=False)
 
 
 def cli():
@@ -310,18 +382,26 @@ def cli():
 
     # Aggregate Survey
     parser_agg_survey = subparsers.add_parser("aggregate_survey")
-    parser_agg_survey.add_argument("-d", "--data_dir", type=str, default=OUT_ROOT_SURVEY)
+    parser_agg_survey.add_argument(
+        "-d", "--data_dir", type=str, default=OUT_ROOT_SURVEY
+    )
+    parser_agg_survey.add_argument(
+        "-op", "--out_path", type=str, default=OUT_ROOT_SURVEY
+    )
     parser_agg_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_agg_survey.add_argument(
-        "-o", "--out_name", type=str, default="SURVEY_SUMMARY"
+        "-on", "--out_name", type=str, default="SURVEY_SUMMARY"
     )
-    parser_agg_survey.add_argument("-s", "--save_path", type=str, default="")
     parser_agg_survey.set_defaults(func=aggregate_survey)
 
     # Update Survey
     parser_update_survey = subparsers.add_parser("update_survey")
-    parser_update_survey.add_argument("-d", "--data_dir", type=str, default=DATA_DIR_SURVEY)
-    parser_update_survey.add_argument("-o", "--out_root", type=str, default=OUT_ROOT_SURVEY)
+    parser_update_survey.add_argument(
+        "-d", "--data_dir", type=str, default=DATA_DIR_SURVEY
+    )
+    parser_update_survey.add_argument(
+        "-o", "--out_root", type=str, default=OUT_ROOT_SURVEY
+    )
     parser_update_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_update_survey.add_argument("--subject_id", type=str, default="")
     parser_update_survey.add_argument("--survey_id", type=str, default="")
@@ -365,6 +445,17 @@ def cli():
     )
     parser_agg_gps.add_argument("--subject_id", type=str, nargs="?", default="")
     parser_agg_gps.set_defaults(func=aggregate_gps)
+
+    # Combine summaries
+    parser_combine = subparsers.add_parser("combine_summaries")
+    parser_combine.add_argument("-o", "--out_dir", type=str)
+    parser_combine.add_argument("-ap", "--acoustic_path", type=str, default="")
+    parser_combine.add_argument("-gp", "--gps_path", type=str, default="")
+    parser_combine.add_argument("-sp", "--survey_path", type=str, default="")
+    parser_combine.add_argument(
+        "-on", "--out_name", type=str, default="COMBINED_SUMMARY"
+    )
+    parser_combine.set_defaults(func=combine_summaries)
 
     # Collect args
     args = parser.parse_args()

@@ -15,6 +15,7 @@ def load_key(fpath):
         .replace({float("nan"): None})
     )
 
+
 def call_function_with_args(func, args):
     """
     Call the function with the arguments extracted from the argparse.Namespace object.
@@ -53,3 +54,15 @@ def call_function_with_args(func, args):
 
     # Call the function with the arguments and return the result if any.
     return func(**args)
+
+
+def excel_style(row, col):
+    """Convert given row and column number to an Excel-style cell name.
+    Source: https://stackoverflow.com/questions/19153462/get-excel-style-column-names-from-column-number
+    """
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = []
+    while col:
+        col, rem = divmod(col - 1, len(letters))
+        result[:0] = letters[rem]
+    return "".join(result) + str(row)
