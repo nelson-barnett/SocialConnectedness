@@ -4,7 +4,9 @@ import statistics
 import pandas as pd
 import warnings
 import argparse
-from forest.jasmine.traj2stats import Frequency, gps_stats_main
+
+from datetime import datetime
+from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 from functools import reduce
 from utils import call_function_with_args, load_key, excel_style
 from acoustic import process_spa
@@ -17,10 +19,8 @@ OUT_ROOT_SURVEY = (
     "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
 )
 
-DATA_DIR_GPS = (
-    "L:/Research Project Current/Social Connectedness/Nelson/additional test GPS"
-)
-OUT_ROOT_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/GPS downloaded from Biewe/results"
+DATA_DIR_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/gps_data"
+OUT_ROOT_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/gps_results"
 
 DATA_DIR_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data/spa_outputs"
 OUT_ROOT_ACOUSTIC = (
@@ -285,7 +285,48 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
         df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
 
 
-def process_gps(data_dir, out_dir, subject_ids):
+def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
+    # Get already existing data
+    out_dir_jasmine = Path(out_dir).joinpath("hourly")
+    init_update_times = (
+        {p.stem: p.stat().st_ctime for p in out_dir_jasmine.iterdir()}
+        if out_dir_jasmine.exists()
+        else []
+    )
+
+    # Get ids of all subjects in data dir (assumes data_dir exists)
+    data_dir_ids = [d.stem for d in Path(data_dir).iterdir() if d.is_dir()]
+
+    # Intersection of already processed ids and those passed
+    # If subject_ids is None, we're doing all the data anyway so the intersection doesn't matter
+    processed_and_passed_intersect = (
+        list(set(subject_ids) & set(init_update_times.keys()))
+        if subject_ids is not None
+        else []
+    )
+
+    # Provide useful information to the user
+    if init_update_times and (subject_ids is None or processed_and_passed_intersect):
+        print(f"The following processed data already exists in {out_dir_jasmine}:")
+        for id in processed_and_passed_intersect:
+            print(
+                f"id: {id}, last updated: {datetime.fromtimestamp(init_update_times[id]).strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+
+        if subject_ids is None:
+            cont = input(
+                f"Would you like to continue with processing all data in {data_dir}: {data_dir_ids}? (y/n): "
+            )
+        else:
+            cont = input(
+                f"Would you like to continue with processing data for subjects {subject_ids}? (y/n): "
+            )
+
+    if cont == "n":
+        print("User requested stop")
+        return
+
+    # Process data
     gps_stats_main(
         data_dir,
         out_dir,
@@ -293,7 +334,45 @@ def process_gps(data_dir, out_dir, subject_ids):
         Frequency.HOURLY,
         True,
         participant_ids=subject_ids,
+        parameters=Hyperparameters(quality_threshold=quality_thresh),
     )
+
+    final_update_times = (
+        {p.stem: p.stat().st_ctime for p in out_dir_jasmine.iterdir()}
+        if out_dir_jasmine.exists()
+        else []
+    )
+
+    # Subject IDs that exist in data_dir but not in out_dir_jasmine
+    # If specific ids were passed, only report those if they were in skipped
+    skipped_subjects = list(set(data_dir_ids).difference(final_update_times.keys()))
+    skipped_subjects = (
+        list(set(skipped_subjects) & set(subject_ids))
+        if subject_ids is not None
+        else skipped_subjects
+    )
+
+    # If any data was processed
+    if final_update_times:
+        # Describe the data that now exists
+        for id, time in final_update_times.items():
+            if id in init_update_times.keys() and init_update_times[id] != time:
+                print(
+                    f"Data for subject {id} has been processed. Previously processed data existed and has been overwritten/updated."
+                )
+            else:
+                print(f"Data for subject {id} has been processed.")
+    else:
+        print(f"No data was processed. Make sure there are data in {data_dir}")
+
+    # Print all subject ids that were skipped
+    if skipped_subjects:
+        print("The following subjects were not processed:")
+        for id in skipped_subjects:
+            print(id)
+        print(
+            f"The current quality threshold is: {quality_thresh} consider passing a lower `quality_thresh` value and retrying."
+        )
 
 
 def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
@@ -429,7 +508,9 @@ def cli():
     parser_process_gps.add_argument(
         "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
     )
-    parser_process_gps.add_argument("--subject_ids", nargs="?", default=None)
+    parser_process_gps.add_argument(
+        "--subject_ids", nargs="*", default=None, const=None
+    )
     parser_process_gps.set_defaults(func=process_gps)
 
     # Aggregate GPS
