@@ -6,7 +6,9 @@ def is_consecutive(days, months, years):
         zip(days, days[1:], months, months[1:], years, years[1:])
     ):
         if (
-            (day + 1 != day_next) # This breaks continuity unless day_next is the start of a new month
+            (
+                day + 1 != day_next
+            )  # This breaks continuity unless day_next is the start of a new month
             and (
                 (day_next != 1)  # Next day is not the start of a new month
                 or (
@@ -17,8 +19,12 @@ def is_consecutive(days, months, years):
                 )  # If month didn't go up by one and it wasn't a new year
                 or ((month == 12 and month_next == 1) and (year + 1 != year_next))
             )
-            or ((day + 1 == day_next) and (month != month_next)) # Day is correct but month isn't 
-            or ((day + 1 == day_next) and (month == month_next) and (year != year_next)) # Day and month are correct but year isn't
+            or (
+                (day + 1 == day_next) and (month != month_next)
+            )  # Day is correct but month isn't
+            or (
+                (day + 1 == day_next) and (month == month_next) and (year != year_next)
+            )  # Day and month are correct but year isn't
         ):
             return False, ind + 1
         else:
@@ -86,11 +92,6 @@ def day_to_obs_day(df, day):
     else:
         return idx[0]
 
+
 def date_series_to_str(date):
-    return '/'.join((str(date["month"]), str(date["day"]), str(date["year"])))
-    
-# if __name__ == "__main__":
-#     fpath = "L:/Research Project Current/Social Connectedness/Nelson/dev/GPS downloaded from Beiwe/results/hourly/4wy_edited_for_testing.csv"
-#     df = pd.read_csv(fpath)
-#     cont, start, end = find_n_cont_days(df)
-#     averages = df.drop(['year','month','day','hour'],axis=1).mean()
+    return "/".join((str(date["month"]), str(date["day"]), str(date["year"])))

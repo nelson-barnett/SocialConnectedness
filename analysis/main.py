@@ -388,29 +388,47 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
         is_cont, start_day, end_day = find_n_cont_days(df, n=30)
 
         if is_cont:
-            obs_day_start = day_to_obs_day(df, start_day)
-            obs_day_end = day_to_obs_day(df, end_day)
-            cont_obs_day_start = date_series_to_str(start_day)
-            cont_obs_day_end = date_series_to_str(end_day)
-        else:
-            obs_day_start = obs_day_end = cont_obs_day_start = cont_obs_day_end = None
+            # Get day number and real date of continuous period
+            obs_day_start_num = day_to_obs_day(df, start_day)
+            obs_day_end_num = day_to_obs_day(df, end_day)
+            obs_day_start_str = date_series_to_str(start_day)
+            obs_day_end_str = date_series_to_str(end_day)
 
-        df_avg = (
-            df.drop(["year", "month", "day", "hour"], axis=1)
-            .mean()
-            .to_frame()
-            .T.add_suffix("_mean")
-        )
-        df_avg.insert(0, "subject_id", this_id)
+            # Get indices of beginning and end datapoints of thirty day period
+            df_start_ind = df.index[
+                (df[["year", "month", "day"]] == start_day).all(axis=1)
+            ].min()
+            df_end_ind = df.index[
+                (df[["year", "month", "day"]] == end_day).all(axis=1)
+            ].max()
+
+            # Get average for only the thirty day period, convert back to DF, rename columns
+            df_avg = (
+                df.drop(["year", "month", "day", "hour"], axis=1)
+                .iloc[df_start_ind:df_end_ind, :]
+                .mean()
+                .to_frame()
+                .T.add_suffix("_mean")
+            )
+        else:
+            obs_day_start_num = obs_day_end_num = obs_day_start_str = (
+                obs_day_end_str
+            ) = None
+            df_avg = pd.DataFrame()
+
+        # Add subject_id column and continuous period info and append to list
+        df_avg.insert(0, "subject_id", [this_id])
         df_list.append(
             df_avg.assign(
                 thirty_days_continuous=is_cont,
-                continuous_obs_start_date=cont_obs_day_start,
-                continuous_obs_end_date=cont_obs_day_end,
-                continuous_obs_start_study_date=obs_day_start,
-                continuous_obs_end_study_date=obs_day_end,
+                continuous_obs_start_date=obs_day_start_str,
+                continuous_obs_end_date=obs_day_end_str,
+                continuous_obs_start_study_date=obs_day_start_num,
+                continuous_obs_end_study_date=obs_day_end_num,
             )
         )
+
+    # Combine all dfs and export
     df_out = pd.concat(df_list, axis=0)
     df_out.to_csv(out_path.joinpath(out_name + ".csv"), index=False, header=True)
 
@@ -427,7 +445,7 @@ def combine_summaries(
 
     with pd.ExcelWriter(Path(out_dir).joinpath(out_name + ".xlsx")) as writer:
         for file in paths:
-            file = Path(file)
+            file = Path(file)  # If file == "", neither condition will be true
             if file.suffix == ".xlsx":
                 this_file = pd.ExcelFile(file)
                 sheets = this_file.sheet_names
@@ -435,7 +453,7 @@ def combine_summaries(
                     this_sheet_name = sheet if len(sheets) > 1 else file.stem.lower()
                     df = this_file.parse(sheet_name=sheet)
                     df.to_excel(writer, sheet_name=f"{this_sheet_name}", index=False)
-            else:  # csv
+            elif file.suffix == ".csv":
                 df = pd.read_csv(file)
                 df.to_excel(writer, sheet_name=f"{file.stem.lower()}", index=False)
 
