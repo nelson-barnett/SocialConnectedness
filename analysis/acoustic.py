@@ -2,12 +2,12 @@ import pandas as pd
 import re
 
 
-def get_speaking_rate(df):
-    return (98 / df["total_duration"][0]) * 60
+def get_speaking_rate(df, n_words=98):
+    return (n_words / df["total_duration"][0]) * 60
 
 
-def get_artic_rate(df):
-    return 147 / df["speech_duration"][0]
+def get_artic_rate(df, n_syl=147):
+    return n_syl / df["speech_duration"][0]
 
 
 def get_subject_id(df):
@@ -83,8 +83,12 @@ def process_spa(fpath):
     # Add data
     df.insert(0, "DATE", get_date(df))
     df.insert(0, "ID", get_subject_id(df))
-    df.insert(10, "SR", get_speaking_rate(df))
-    df.insert(11, "AR", get_artic_rate(df))
+    
+    SR = get_speaking_rate(df, df.n_words) if "n_words" in df.columns else get_speaking_rate(df)
+    AR = get_artic_rate(df, df.n_syl) if "n_syl" in df.columns else get_artic_rate(df)
+    
+    df.insert(10, "SR", SR)
+    df.insert(11, "AR", AR)
 
     # Rename cols and drop unwanted ones
     return df.rename(
