@@ -34,7 +34,10 @@ KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_k
 # out_path_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/processed"
 # data_dir_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/"
 
-def process_survey(data_dir, out_root, key_path, subject_id="", survey_id="", skip_dirs=[]):
+
+def process_survey(
+    data_dir, out_root, key_path, subject_id="", survey_id="", skip_dirs=[]
+):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_root` by survey ID
 
@@ -52,14 +55,13 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id="", sk
     key_df = load_key(key_path)
     for file in Path(data_dir).glob("**/*.csv"):
         # Check that none of the parent dirs of file are supposed to be skipped
-        if set(file.parent.parts) & set(skip_dirs): # Intersection
+        if set(file.parent.parts) & set(skip_dirs):  # Intersection
             continue
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
             print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
             continue
-            # raise Exception("Survey ID not found in key.")
 
         this_subj_id = file.parent.parent.parent.name
 
@@ -76,7 +78,8 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id="", sk
         else:
             this_survey.parse_and_score()
         this_survey.export(out_dir)
-        
+
+    # TODO: Combine this with above code and add "use_zips" optional flag
     for child in Path(data_dir).iterdir():
         if child.suffix == ".zip" and not set(child.parts) & set(skip_dirs):
             zf = zipfile.ZipFile(child)
@@ -88,18 +91,26 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id="", sk
                     try:
                         this_key = key_df[file.parent.name]
                     except KeyError:
-                        print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
+                        print(
+                            f"Survey ID '{file.parent.name}' not found in key. Skipping..."
+                        )
                         continue
-                    # raise Exception("Survey ID not found in key.")
 
                     this_subj_id = file.parent.parent.parent.name
 
-                    if subject_id and (this_subj_id != subject_id or file.parent.name != survey_id):
+                    if subject_id and (
+                        this_subj_id != subject_id or file.parent.name != survey_id
+                    ):
                         continue
 
                     out_dir = out_root.joinpath(file.parent.name)
                     out_dir.mkdir(exist_ok=True, parents=True)
-                    this_survey = Survey(file=file, key=this_key, subject_id=this_subj_id, file_df=zf.open(name))
+                    this_survey = Survey(
+                        file=file,
+                        key=this_key,
+                        subject_id=this_subj_id,
+                        file_df=zf.open(name),
+                    )
 
                     # If there is no scoring to be done, just clean and save survey
                     if this_key["index"] is None and this_key["invert"] is None:
@@ -226,7 +237,9 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
             n.append(len(survey_sum))
             avgs.append(statistics.fmean(survey_sum))
             if len(survey_sum) > 1:
-                stds.append(statistics.stdev([float(x) for x in survey_sum])) # statistics.stdev errors on list of numpy floats
+                stds.append(
+                    statistics.stdev([float(x) for x in survey_sum])
+                )  # statistics.stdev errors on list of numpy floats
             else:
                 stds.append(float("nan"))
 

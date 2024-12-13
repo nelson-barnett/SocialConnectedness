@@ -15,4 +15,6 @@ SURVEY_ANSWER_OPTIONS = {
         "None;Intermittent use of BiPAP;Continuous use of BiPAP during the night;Continuous use of BiPAP during day and night;Invasive mechanical ventilation by intubation or  tracheostomy",
     ]
 }
-SURVEY_ANSWER_OPTIONS["571e60841206f7280a92d039"] = SURVEY_ANSWER_OPTIONS["Q1t0zpGcvjT4Y3XzTOfUZTjV"]
+SURVEY_ANSWER_OPTIONS["571e60841206f7280a92d039"] = SURVEY_ANSWER_OPTIONS[
+    "Q1t0zpGcvjT4Y3XzTOfUZTjV"
+]

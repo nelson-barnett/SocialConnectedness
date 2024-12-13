@@ -15,9 +15,9 @@ class Survey(object):
         subject_id="",
         parse_err=-201,
         skip_ans=-101,
-        file_df = ""
+        file_df="",
     ):
-        file_df = file_df if file_df else file 
+        file_df = file_df if file_df else file
         self.df = pd.read_csv(file_df, na_filter=False)
         self.parse_err = parse_err
         self.skip_ans = skip_ans
@@ -66,19 +66,19 @@ class Survey(object):
             if self.key["invert"] or (
                 self.key["invert_qs"] and q_num + 1 in self.key["invert_qs"]
             ):
-                return mult*((len(ans_opts) - 1 - int(answer)) + self.key["index"])
+                return mult * ((len(ans_opts) - 1 - int(answer)) + self.key["index"])
             else:
-                return mult*(self.key["index"] + int(answer))
+                return mult * (self.key["index"] + int(answer))
         except ValueError:  # answer non-numeric (expected most of the time)
             try:
                 if self.key["invert"] or (
                     self.key["invert_qs"] and q_num + 1 in self.key["invert_qs"]
                 ):
-                    return mult*((len(ans_opts) - 1 - ans_opts.index(answer)) + self.key[
-                        "index"
-                    ])
+                    return mult * (
+                        (len(ans_opts) - 1 - ans_opts.index(answer)) + self.key["index"]
+                    )
                 else:
-                    return mult*(self.key["index"] + ans_opts.index(answer))
+                    return mult * (self.key["index"] + ans_opts.index(answer))
             except ValueError:
                 return self.parse_err
 
@@ -175,13 +175,14 @@ class Survey(object):
         Args:
             minimal (bool, optional): _description_. Defaults to False.
         """
-        # TODO: Make this one method call. For some reason, listing the column names doesn't work
-        # EX: self.df[["question answer options", "answer"]].apply(lambda x: x.replace("[","").replace("]",""))
-        # self.df["question answer options"] = self.df["question answer options"].apply(
-        #     lambda x: x.replace("[", "").replace("]", "").replace(" ;", ";")
-        # )
-        self.df["question answer options"] = [x.replace("[", "").replace("]", "").replace(" ;", ";").replace(" ; ", ";") for x in self.df["question answer options"]]
-        self.df["answer"] = [x.replace("[", "").replace("]","") if isinstance(x,str) else x for x in self.df["answer"]]
+        self.df["question answer options"] = [
+            x.replace("[", "").replace("]", "").replace(" ;", ";").replace(" ; ", ";")
+            for x in self.df["question answer options"]
+        ]
+        self.df["answer"] = [
+            x.replace("[", "").replace("]", "") if isinstance(x, str) else x
+            for x in self.df["answer"]
+        ]
 
         if minimal:
             # Remove all non-question and not presented rows
@@ -231,9 +232,11 @@ class Survey(object):
                 .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
             )
         ].index
-            
-        addl_skip = [x - 1 for x in self.key["no_score"]] if self.key["no_score"] else []
-        
+
+        addl_skip = (
+            [x - 1 for x in self.key["no_score"]] if self.key["no_score"] else []
+        )
+
         for index in set(list(idx.array) + addl_skip):
             score_flag[index] = False
 
