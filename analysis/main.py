@@ -5,6 +5,8 @@ import pandas as pd
 import warnings
 import argparse
 
+import zipfile
+
 from datetime import datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 from functools import reduce
@@ -28,9 +30,11 @@ OUT_ROOT_ACOUSTIC = (
 )
 
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
+# key_path_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/survey_key.csv"
+# out_path_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/processed"
+# data_dir_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/"
 
-
-def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
+def process_survey(data_dir, out_root, key_path, subject_id="", survey_id="", skip_dirs=[]):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_root` by survey ID
 
@@ -47,16 +51,19 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
 
     key_df = load_key(key_path)
     for file in Path(data_dir).glob("**/*.csv"):
+        # Check that none of the parent dirs of file are supposed to be skipped
+        if set(file.parent.parts) & set(skip_dirs): # Intersection
+            continue
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
-            raise Exception("Survey ID not found in key.")
+            print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
+            continue
+            # raise Exception("Survey ID not found in key.")
 
         this_subj_id = file.parent.parent.parent.name
 
-        if (subject_id and this_subj_id != subject_id) or (
-            survey_id and file.parent.name != survey_id
-        ):
+        if subject_id and (this_subj_id != subject_id or file.parent.name != survey_id):
             continue
 
         out_dir = out_root.joinpath(file.parent.name)
@@ -69,6 +76,37 @@ def process_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
         else:
             this_survey.parse_and_score()
         this_survey.export(out_dir)
+        
+    for child in Path(data_dir).iterdir():
+        if child.suffix == ".zip" and not set(child.parts) & set(skip_dirs):
+            zf = zipfile.ZipFile(child)
+            for name in zf.namelist():
+                if name.startswith("__") or not name.endswith(".csv"):
+                    continue
+                else:
+                    file = Path(name)
+                    try:
+                        this_key = key_df[file.parent.name]
+                    except KeyError:
+                        print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
+                        continue
+                    # raise Exception("Survey ID not found in key.")
+
+                    this_subj_id = file.parent.parent.parent.name
+
+                    if subject_id and (this_subj_id != subject_id or file.parent.name != survey_id):
+                        continue
+
+                    out_dir = out_root.joinpath(file.parent.name)
+                    out_dir.mkdir(exist_ok=True, parents=True)
+                    this_survey = Survey(file=file, key=this_key, subject_id=this_subj_id, file_df=zf.open(name))
+
+                    # If there is no scoring to be done, just clean and save survey
+                    if this_key["index"] is None and this_key["invert"] is None:
+                        this_survey.clean(minimal=True)
+                    else:
+                        this_survey.parse_and_score()
+                    this_survey.export(out_dir)
 
 
 def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
@@ -104,7 +142,7 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
             # datetime.strptime(dt, "%Y-%m-%d %H_%M_%S")
 
             # Load file
-            this_df = pd.read_csv(fpath, na_filter=False)
+            this_df = pd.read_csv(fpath)
             is_nonnumeric = "score" not in this_df.columns
 
             # Establish sum
@@ -129,10 +167,10 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
                     [subject_id, date, time]
                     + this_df.score.to_list()
                     + [
-                        this_df.score[0:3].sum(),
-                        this_df.score[3:6].sum(),
-                        this_df.score[6:9].sum(),
-                        this_df.score[9:12].sum(),
+                        float(this_df.score[0:3].sum()),
+                        float(this_df.score[3:7].sum()),
+                        float(this_df.score[7:10].sum()),
+                        float(this_df.score[10:13].sum()),
                         sum_field,
                     ]
                 )
@@ -188,7 +226,7 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
             n.append(len(survey_sum))
             avgs.append(statistics.fmean(survey_sum))
             if len(survey_sum) > 1:
-                stds.append(statistics.stdev(survey_sum))
+                stds.append(statistics.stdev([float(x) for x in survey_sum])) # statistics.stdev errors on list of numpy floats
             else:
                 stds.append(float("nan"))
 
@@ -475,6 +513,7 @@ def cli():
     )
     parser_process_survey.add_argument("--subject_id", type=str, nargs="?", default="")
     parser_process_survey.add_argument("--survey_id", type=str, nargs="?", default="")
+    parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
     parser_process_survey.set_defaults(func=process_survey)
 
     # Aggregate Survey

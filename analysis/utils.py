@@ -4,10 +4,15 @@ import inspect
 
 def load_key(fpath):
     key = pd.read_csv(fpath)
-    # Convert string of invert vals to list
-    key["invert_qs"] = key["invert_qs"].apply(
-        lambda x: x if not isinstance(x, str) else [int(y) for y in x.split(",")]
-    )
+    # Convert string of invert, no_sore vals to list (maybe way to do it on one line?)
+    key["invert_qs"] = [
+        x if not isinstance(x, str) else [int(y) for y in x.split(",")]
+        for x in key["invert_qs"]
+    ]
+    key["no_score"] = [
+        x if not isinstance(x, str) else [int(y) for y in x.split(",")]
+        for x in key["no_score"]
+    ]
     key = key.T
     return (
         key.rename(columns=key.loc["id"])

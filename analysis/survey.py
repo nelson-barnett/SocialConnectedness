@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import re
+from constants import SURVEY_ANSWER_OPTIONS
 from utils import load_key
 
 
@@ -14,8 +15,10 @@ class Survey(object):
         subject_id="",
         parse_err=-201,
         skip_ans=-101,
+        file_df = ""
     ):
-        self.df = pd.read_csv(file, na_filter=False)
+        file_df = file_df if file_df else file 
+        self.df = pd.read_csv(file_df, na_filter=False)
         self.parse_err = parse_err
         self.skip_ans = skip_ans
         self.file = Path(file)
@@ -57,24 +60,25 @@ class Survey(object):
             int: Scored value
         """
         ans_opts = [i.strip() for i in ans_opts]
-        answer = answer.strip()
+        answer = answer.strip() if isinstance(answer, str) else answer
+        mult = self.key["multiplier"] if self.key["multiplier"] else 1
         try:
             if self.key["invert"] or (
                 self.key["invert_qs"] and q_num + 1 in self.key["invert_qs"]
             ):
-                return (len(ans_opts) - 1 - int(answer)) + self.key["index"]
+                return mult*((len(ans_opts) - 1 - int(answer)) + self.key["index"])
             else:
-                return self.key["index"] + int(answer)
+                return mult*(self.key["index"] + int(answer))
         except ValueError:  # answer non-numeric (expected most of the time)
             try:
                 if self.key["invert"] or (
                     self.key["invert_qs"] and q_num + 1 in self.key["invert_qs"]
                 ):
-                    return (len(ans_opts) - 1 - ans_opts.index(answer)) + self.key[
+                    return mult*((len(ans_opts) - 1 - ans_opts.index(answer)) + self.key[
                         "index"
-                    ]
+                    ])
                 else:
-                    return self.key["index"] + ans_opts.index(answer)
+                    return mult*(self.key["index"] + ans_opts.index(answer))
             except ValueError:
                 return self.parse_err
 
@@ -102,6 +106,11 @@ class Survey(object):
         # Check if expected splits exist (e.g., "opt 1;opt 2;...")
         if re.findall(r"\S;\S", opts):
             splits = re.finditer(r"\S;\S", opts)  # Use them if they exist
+        # elif re.findall(r"\S;\s\S", opts) and not re.findall(r",", opts) and self.id in SURVEY_ANSWER_OPTIONS.keys():
+        elif self.id in SURVEY_ANSWER_OPTIONS.keys():
+            # If there is a replacement for this exact survey, use it
+            opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
+            splits = re.finditer(r"\S;\S", opts)
         else:
             # Assume splits are separated with spaces, too (e.g., "opt 1; opt 2; ...")
             splits = re.finditer(r"\S;\s\S", opts)
@@ -168,12 +177,11 @@ class Survey(object):
         """
         # TODO: Make this one method call. For some reason, listing the column names doesn't work
         # EX: self.df[["question answer options", "answer"]].apply(lambda x: x.replace("[","").replace("]",""))
-        self.df["question answer options"] = self.df["question answer options"].apply(
-            lambda x: x.replace("[", "").replace("]", "")
-        )
-        self.df["answer"] = self.df["answer"].apply(
-            lambda x: x.replace("[", "").replace("]", "")
-        )
+        # self.df["question answer options"] = self.df["question answer options"].apply(
+        #     lambda x: x.replace("[", "").replace("]", "").replace(" ;", ";")
+        # )
+        self.df["question answer options"] = [x.replace("[", "").replace("]", "").replace(" ;", ";").replace(" ; ", ";") for x in self.df["question answer options"]]
+        self.df["answer"] = [x.replace("[", "").replace("]","") if isinstance(x,str) else x for x in self.df["answer"]]
 
         if minimal:
             # Remove all non-question and not presented rows
@@ -223,8 +231,10 @@ class Survey(object):
                 .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
             )
         ].index
-
-        for index in idx.array:
+            
+        addl_skip = [x - 1 for x in self.key["no_score"]] if self.key["no_score"] else []
+        
+        for index in set(list(idx.array) + addl_skip):
             score_flag[index] = False
 
         self.df["score_flag"] = score_flag
