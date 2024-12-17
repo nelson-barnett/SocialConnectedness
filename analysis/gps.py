@@ -2,6 +2,17 @@ import calendar
 
 
 def is_consecutive(days, months, years):
+    """Determines if passed data constitute a continuous set of days.
+
+    Args:
+        days (Series): Day values
+        months (Series): Month values
+        years (Series): Year values
+
+    Returns:
+        bool: True if data is consecutive, otherwise False
+        int: Last index checked + 1 (last day checked)
+    """
     for ind, (day, day_next, month, month_next, year, year_next) in enumerate(
         zip(days, days[1:], months, months[1:], years, years[1:])
     ):
@@ -33,6 +44,17 @@ def is_consecutive(days, months, years):
 
 
 def find_n_cont_days(df, n=30):
+    """Determines if `n` consecutive days exist in `df`.
+
+    Args:
+        df (DataFrame): Output CSV of `process_gps` loaded in as a pandas DataFrame. 
+        n (int, optional): Number of days to check for consecutivity. Defaults to 30.
+
+    Returns:
+        bool: True if `n` consecutive days were found, False otherwise
+        Series: Start day (day, month, year). If no consecutive set of days found, last tested start day.
+        Series: End day (day, month, year). If no consecutive set of days found, last tested end day.
+    """
     df_grouped = df.groupby(["year", "month", "day"]).size().reset_index()
     consecutive_found = False  # Initialize so while loop can pass without running and func still returns correctly
     start_ind = 0
@@ -94,4 +116,13 @@ def day_to_obs_day(df, day):
 
 
 def date_series_to_str(date):
+    """Formats series containing day, month, and year to "/" separated string.
+    Intended to be used with outputs from `find_n_cont_days`
+
+    Args:
+        date (Series): Series containing month, day, year.
+
+    Returns:
+        str: Data in `date` formatted as `month/day/year` 
+    """
     return "/".join((str(date["month"]), str(date["day"]), str(date["year"])))

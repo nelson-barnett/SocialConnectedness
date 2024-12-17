@@ -6,6 +6,8 @@ from utils import load_key
 
 
 class Survey(object):
+    """Object that contains all relevant information for a given survey
+    """
     def __init__(
         self,
         file,
@@ -17,6 +19,23 @@ class Survey(object):
         skip_ans=-101,
         file_df="",
     ):
+        """Builds Survey object
+
+        Args:
+            file (str): Full path to a CSV survey file (Beiwe output)
+            key_path (str, optional): Path to the survey key CSV file. Defaults to "".
+            key (Union[Series, None], optional): Series from key specific to this survey. Defaults to None.
+            id (str, optional): Survey ID. Defaults to "".
+            subject_id (str, optional): Subject ID for this survey. Defaults to "".
+            parse_err (int, optional): Value to assign to an answer if there is a parsing error. Defaults to -201.
+            skip_ans (int, optional): Value to assign to an answer if it is skipped. Defaults to -101.
+            file_df (str, optional): Path to the CSV survey file that is readable by pandas. 
+                If file is in a zip file, `file_df` should be zipfile.ZipFile.open(). Defaults to "".
+
+        Raises:
+            Exception: Survey ID not found in key
+            Exception: Survey ID and key ID do not match. Make sure correct key is being passed.
+        """
         file_df = file_df if file_df else file
         self.df = pd.read_csv(file_df, na_filter=False)
         self.parse_err = parse_err
@@ -89,6 +108,7 @@ class Survey(object):
             opts (str): String of answer options split by semicolons
             ans (str): Answer for this question
             q_num (int): This question's number
+            score_flag (bool): True if this question should be score, Flase if not
 
         Returns:
             int: Scored answer
@@ -170,10 +190,14 @@ class Survey(object):
         return self.score(ans_opts, ans, q_num)
 
     def clean(self, minimal=False):
-        """Cleans the survey dataframe by removing brackets and dropping rows that are not numerically scored.
+        """Cleans the survey dataframe by removing brackets,
+        dropping rows that are not numerically scored,
+        and replacing " ;" and " ; " with ";" in question answer options.
 
         Args:
-            minimal (bool, optional): _description_. Defaults to False.
+            minimal (bool, optional): Minimal cleaning -- likely True most of the time. 
+                If False, drops yes/no, and not presented, "only answer if" + no answer selected question rows.
+                Defaults to False.
         """
         self.df["question answer options"] = [
             x.replace("[", "").replace("]", "").replace(" ;", ";").replace(" ; ", ";")
@@ -215,6 +239,11 @@ class Survey(object):
         self.df.reset_index(drop=True, inplace=True)
 
     def mark_to_score(self):
+        """Adds a "score_flag" column to self.df 
+            containing boolean values indicating whether this question should be scored or not. 
+            Marks as false: "not presented, only answer if + no answer selected, and yes/no question rows.
+            Similar to those that would be dropped if `minimal = True` in `self.clean()`
+        """
         score_flag = [True] * len(self.df)
         idx = self.df.loc[
             (self.df["answer"] == "NOT_PRESENTED")
@@ -262,6 +291,14 @@ class Survey(object):
         self.df.drop("score_flag", axis=1, inplace=True)
 
     def export(self, out_dir, out_prefix=""):
+        """Saves `self.df` to specified location.
+            Appends "_OUT" always. Appends "_OUT_SKIPPED_ANS" and "_OUT_PARSE_ERR" 
+            if self.skipped_ans or self.parse_err are in self.df.score. 
+
+        Args:
+            out_dir (str): Path to directory into which `self.df` should be saved.
+            out_prefix (str, optional): Prefix to prepend to filename. Defaults to "".
+        """
         if not out_prefix:
             out_prefix = self.subject_id
         if "score" in self.df.columns:

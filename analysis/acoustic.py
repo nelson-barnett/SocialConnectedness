@@ -3,24 +3,70 @@ import re
 
 
 def get_speaking_rate(df, n_words=98):
+    """Returns speaking rate for a given 
+    SPA output (with lower case column names) and optional word count
+
+    Args:
+        df (DataFrame): Output of SPA analysis with column names lowered
+        n_words (int, optional): Number of words. Defaults to 98.
+
+    Returns:
+        float: Speaking rate (words/min)
+    """
     return (n_words / df["total_duration"][0]) * 60
 
 
 def get_artic_rate(df, n_syl=147):
+    """Returns articulation rate for a given 
+    SPA output (with lower case column names) and optional syllable count
+
+    Args:
+        df (DataFrame): Output of SPA analysis with column names lowered
+        n_syl (int, optional): Number of syllables. Defaults to 147.
+
+    Returns:
+        float: Articulation rate (syllables/sec)
+    """
     return n_syl / df["speech_duration"][0]
 
 
 def get_subject_id(df):
+    """Returns subject id of a given SPA output (with lower case column names)
+
+    Args:
+        df (DataFrame): Output of SPA analysis with column names lowered
+
+    Returns:
+        str: Subject ID
+    """
     fname = df["file name"][0]
     return fname[0 : fname.find("_")]
 
 
 def get_date(df):
+    """Returns date of a given SPA output (with lower case column names)
+
+    Args:
+        df (DataFrame): Output of SPA analysis with column names lowered
+
+    Returns:
+        str: Date
+    """
     fname = df["file name"][0]
     return fname[re.search("Bamboo_", fname).end() : fname.find(" ")]
 
 
 def process_spa(fpath):
+    """Cleans columns of SPA output (keeping any analyst-added columns)
+    and adds speaking rate, artic rate, date, and id columns
+
+    Args:
+        fpath (str): Path to SPA output CSV file.
+
+    Returns:
+        DataFrame: Processed dataframe
+    """
+    
     drop_cols = [
         "file name",
         "iteration",

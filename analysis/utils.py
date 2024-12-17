@@ -3,6 +3,14 @@ import inspect
 
 
 def load_key(fpath):
+    """Loads and processes survey key
+
+    Args:
+        fpath (str): Path to survey key CSV.
+
+    Returns:
+        DataFrame: Key formatted such that columns are survey ids
+    """
     key = pd.read_csv(fpath)
     # Convert string of invert, no_sore vals to list (maybe way to do it on one line?)
     key["invert_qs"] = [

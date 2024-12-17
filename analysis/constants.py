@@ -1,3 +1,8 @@
+####### CONSTANTS #######
+# SURVEY_ANSWER_OPTIONS is a dictionary with 
+# survey id keys and lists containing properly formatted answer options 
+# (each option separated by letter-semicolon-letter) as values
+
 SURVEY_ANSWER_OPTIONS = {
     "Q1t0zpGcvjT4Y3XzTOfUZTjV": [
         "Normal speech processes;Detectable speech disturbances;Intelligible with repeating;Speech combined with non-vocal communication;Loss of useful speech",

@@ -119,14 +119,14 @@ def process_survey(
             process(item)
 
 
-def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
-    """Take all processed data and create a summary Excel doc saved to `out_path`.
+def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
+    """Take all processed data and create a summary Excel doc saved to `out_dir`.
     First tab is a data summary, second tab is a basic statistics summary,
     remaining tabs contain detailed scoring for each individual survey
 
     Args:
         data_dir (str): Path to directory in which `processed` data exists.
-        out_path (str): Directory to which summary sheet should be saved.
+        out_dir (str): Directory to which summary sheet should be saved.
         key_path (str): Path to CSV key containing survey scoring rules
         out_name (str, optional): Name of output file. Defaults to "SURVEY_SUMMARY".
     """
@@ -139,6 +139,7 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
     for spath in data_dir.glob("*"):
         if not spath.is_dir():
             continue
+        # survey_id is spath.name
         survey_name = survey_key[spath.name]["name"]
         agg_list = []  # Reset aggregate dataframe every new survey
         for fpath in spath.glob("*.csv"):
@@ -275,7 +276,7 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
 
     # Loop through aggregated dataframes and save to separate sheets
     with pd.ExcelWriter(
-        Path(out_path).joinpath(out_name + ".xlsx"),
+        Path(out_dir).joinpath(out_name + ".xlsx"),
         engine="xlsxwriter",
         engine_kwargs={"options": {"strings_to_numbers": True}},
     ) as writer:
@@ -285,21 +286,39 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def update_survey(data_dir, out_root, key_path, subject_id="", survey_id=""):
+def update_survey(data_dir, out_dir, key_path, subject_id="", survey_id=""):
+    """Updates all survey analysis. Packages process and aggregate into one function.
+
+    Args:
+        data_dir (str): Path to directory in which data exists.
+        out_dir (str): Path to directory into which outputs will be saved
+        key_path (str): Path to CSV key containing survey scoring rules
+        subject_id (str, optional): ID of subject whose data should be processed. Defaults to "".
+        survey_id (str, optional): ID of survey to process. Defaults to "".
+    """
     if not subject_id and not survey_id:
         warnings.warn(
             "No subject_id or survey_id specified. Processing and aggregating all data"
         )
 
     process_survey(
-        data_dir, out_root, key_path, subject_id=subject_id, survey_id=survey_id
+        data_dir, out_dir, key_path, subject_id=subject_id, survey_id=survey_id
     )
-    aggregate_survey(data_dir, out_root, key_path)
+    aggregate_survey(out_dir, out_dir, key_path)
 
 
-def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_id=""):
-    out_path = Path(out_path)
-    out_path.mkdir(exist_ok=True)
+def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_id=""):
+    """Collects acoustic data in `data_dir`
+    (processed externally in SPA) into a summary sheet in `out_dir`.
+
+    Args:
+        data_dir (str): Path to directory in which data is stored.
+        out_dir (str): Path to directory into which summary will be saved
+        out_name (str, optional): Name of the summary file. Defaults to "ACOUSTIC_SUMMARY".
+        subject_id (str, optional): Subject whose data should be analyzed. Defaults to "".
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(exist_ok=True)
 
     df_list = []
     for file in Path(data_dir).glob("**/*.xlsx"):
@@ -314,7 +333,7 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
     if "flag" in df.columns.str.lower():
         # Prep
         writer = pd.ExcelWriter(
-            out_path.joinpath(out_name + ".xlsx"), engine="xlsxwriter"
+            out_dir.joinpath(out_name + ".xlsx"), engine="xlsxwriter"
         )
         df.to_excel(writer, sheet_name="Sheet1", index=False)
 
@@ -340,10 +359,19 @@ def aggregate_acoustic(data_dir, out_path, out_name="ACOUSTIC_SUMMARY", subject_
 
         writer.close()
     else:
-        df.to_excel(out_path.joinpath(out_name + ".xlsx"), index=False)
+        df.to_excel(out_dir.joinpath(out_name + ".xlsx"), index=False)
 
 
 def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
+    """Runs Forest.Jasmine's GPS analysis with some user interaction and 
+    additional helpful info printed
+
+    Args:
+        data_dir (str): _description_
+        out_dir (str): _description_
+        subject_ids (Union[list, None], optional): List of subject ids to use. If None, all ids in `data_dir` are used. Defaults to None.
+        quality_thresh (float, optional): Data quality threshold. Defaults to 0.05.
+    """
     # Get already existing data
     out_dir_jasmine = Path(out_dir).joinpath("hourly")
     init_update_times = (
@@ -433,9 +461,17 @@ def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
         )
 
 
-def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
-    out_path = Path(out_path)
-    out_path.mkdir(exist_ok=True)
+def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY", subject_id=""):
+    """Collects data from `process_gps` in `data_dir` into a summary sheet in `out_dir`.
+
+    Args:
+        data_dir (str): Path to directory in which data exists
+        out_dir (str): Path to directory into which summary will be saved
+        out_name (str, optional): Name of the summary file. Defaults to "GPS_SUMMARY".
+        subject_id (str, optional): Subject id to process. Defaults to "".
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(exist_ok=True)
 
     df_list = []
     for file in Path(data_dir).glob("**/*.csv"):
@@ -488,12 +524,21 @@ def aggregate_gps(data_dir, out_path, out_name="GPS_SUMMARY", subject_id=""):
 
     # Combine all dfs and export
     df_out = pd.concat(df_list, axis=0)
-    df_out.to_csv(out_path.joinpath(out_name + ".csv"), index=False, header=True)
+    df_out.to_csv(out_dir.joinpath(out_name + ".csv"), index=False, header=True)
 
 
 def combine_summaries(
     out_dir, acoustic_path="", gps_path="", survey_path="", out_name="COMBINED_SUMMARY"
 ):
+    """Combines summary sheets into single sheet
+
+    Args:
+        out_dir (str): Directory into which document will be saved
+        acoustic_path (str, optional): Path to acoustic summary file. Defaults to "".
+        gps_path (str, optional): Path to gps summary file. Defaults to "".
+        survey_path (str, optional): Path to survey summary file. Defaults to "".
+        out_name (str, optional): Name of output file. Defaults to "COMBINED_SUMMARY".
+    """
     paths = [acoustic_path, gps_path, survey_path]
     if paths.count("") > 2:
         print(
@@ -517,6 +562,9 @@ def combine_summaries(
 
 
 def cli():
+    """Sets up and runs argparser. 
+    Takes in command line arguments and dispatches to correct function.
+    """
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
@@ -543,7 +591,7 @@ def cli():
         "-d", "--data_dir", type=str, default=OUT_ROOT_SURVEY
     )
     parser_agg_survey.add_argument(
-        "-op", "--out_path", type=str, default=OUT_ROOT_SURVEY
+        "-od", "--out_dir", type=str, default=OUT_ROOT_SURVEY
     )
     parser_agg_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_agg_survey.add_argument(
@@ -557,7 +605,7 @@ def cli():
         "-d", "--data_dir", type=str, default=DATA_DIR_SURVEY
     )
     parser_update_survey.add_argument(
-        "-o", "--out_root", type=str, default=OUT_ROOT_SURVEY
+        "-o", "--out_dir", type=str, default=OUT_ROOT_SURVEY
     )
     parser_update_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
     parser_update_survey.add_argument("--subject_id", type=str, default="")
@@ -570,7 +618,7 @@ def cli():
         "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_ACOUSTIC
     )
     parser_agg_ac.add_argument(
-        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT_ACOUSTIC
+        "-od", "--out_dir", type=str, nargs="?", default=OUT_ROOT_ACOUSTIC
     )
     parser_agg_ac.add_argument(
         "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
@@ -597,7 +645,7 @@ def cli():
         "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_GPS
     )
     parser_agg_gps.add_argument(
-        "-op", "--out_path", type=str, nargs="?", default=OUT_ROOT_GPS
+        "-od", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
     )
     parser_agg_gps.add_argument(
         "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
