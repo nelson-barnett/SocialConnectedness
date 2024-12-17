@@ -4,7 +4,6 @@ import statistics
 import pandas as pd
 import warnings
 import argparse
-
 import zipfile
 
 from datetime import datetime
@@ -30,102 +29,106 @@ OUT_ROOT_ACOUSTIC = (
 )
 
 KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
-# key_path_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/survey_key.csv"
-# out_path_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/processed"
-# data_dir_121224 = "L:/Research Project Current/Respiratory_Acoustic/Nelson Barnett/Analyze FRS/"
 
 
 def process_survey(
-    data_dir, out_root, key_path, subject_id="", survey_id="", skip_dirs=[]
+    data_dir,
+    out_dir,
+    key_path,
+    subject_id="",
+    survey_id="",
+    skip_dirs=[],
+    use_zips=False,
 ):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
-    saved in `out_root` by survey ID
+    saved in `out_dir` by survey ID
 
     Args:
         data_dir (str): Path to root directory where data is stored
-        out_root (str): Path to directory in which data will be saved
+        out_dir (str): Path to directory in which data will be saved
         key_path (str): Path to CSV key containing survey scoring rules
-
-    Raises:
-        Exception: KeyError if survey ID does not exist in the provided key
+        subject_id (str, optional): Individual subject ID to process. Defaults to "".
+        survey_id (str, optional): Individual survey ID to process. Defaults to "".
+        skip_dirs (list, optional): List of directories names to skip when looking for data. Does not need to be full path, only dir name. Defaults to [].
+        use_zips (bool, optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
     """
-    out_root = Path(out_root)
-    out_root.mkdir(exist_ok=True)
-
+    # Setup
+    out_dir = Path(out_dir)
+    out_dir.mkdir(exist_ok=True)
     key_df = load_key(key_path)
-    for file in Path(data_dir).glob("**/*.csv"):
-        # Check that none of the parent dirs of file are supposed to be skipped
-        if set(file.parent.parts) & set(skip_dirs):  # Intersection
-            continue
+    extensions = {".csv", ".zip"} if use_zips else {".csv"} # zip file control is done here
+
+    # Inner func (DRY)
+    def process(file):
+        # Don't error if this survey isn't in key. Print message and move on
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
             print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
-            continue
+            return
 
+        # Standard file structure for Beiwe downloads 
         this_subj_id = file.parent.parent.parent.name
 
+        # TODO: Allow for multiple subjects, surveys to be specified
         if subject_id and (this_subj_id != subject_id or file.parent.name != survey_id):
-            continue
+            return
 
-        out_dir = out_root.joinpath(file.parent.name)
-        out_dir.mkdir(exist_ok=True, parents=True)
-        this_survey = Survey(file, key=this_key, subject_id=this_subj_id)
+        # Make out dir in specified path + survey id
+        this_out_dir = out_dir.joinpath(file.parent.name)
+        this_out_dir.mkdir(exist_ok=True, parents=True)
+
+        # Generate survey object
+        this_survey = (
+            Survey(
+                file=file,
+                key=this_key,
+                subject_id=this_subj_id,
+                file_df=zf.open(name),
+            ) # zip file requires special handling
+            if item.suffix == ".zip"
+            else Survey(file=file, key=this_key, subject_id=this_subj_id)
+        )
 
         # If there is no scoring to be done, just clean and save survey
         if this_key["index"] is None and this_key["invert"] is None:
             this_survey.clean(minimal=True)
         else:
             this_survey.parse_and_score()
-        this_survey.export(out_dir)
+        this_survey.export(this_out_dir)
+        
+    # Main func -- Iterate recursively through everything in data_dir
+    for item in Path(data_dir).glob("**/*"):
+        # Check that this item is not meant to be skipped and that it the file extension is intended
+        if (
+            set(item.parts) & set(skip_dirs) or item.suffix not in extensions
+        ):
+            continue
 
-    # TODO: Combine this with above code and add "use_zips" optional flag
-    for child in Path(data_dir).iterdir():
-        if child.suffix == ".zip" and not set(child.parts) & set(skip_dirs):
-            zf = zipfile.ZipFile(child)
+        # Zip needs secondary loop. It is treated as a top-level dir
+        if item.suffix == ".zip":
+            zf = zipfile.ZipFile(item)
+            # Go through every file (name) in zip file  
             for name in zf.namelist():
+                # Skips "__MACOS" folders and non-csv files
                 if name.startswith("__") or not name.endswith(".csv"):
                     continue
                 else:
-                    file = Path(name)
-                    try:
-                        this_key = key_df[file.parent.name]
-                    except KeyError:
-                        print(
-                            f"Survey ID '{file.parent.name}' not found in key. Skipping..."
-                        )
-                        continue
-
-                    this_subj_id = file.parent.parent.parent.name
-
-                    if subject_id and (
-                        this_subj_id != subject_id or file.parent.name != survey_id
-                    ):
-                        continue
-
-                    out_dir = out_root.joinpath(file.parent.name)
-                    out_dir.mkdir(exist_ok=True, parents=True)
-                    this_survey = Survey(
-                        file=file,
-                        key=this_key,
-                        subject_id=this_subj_id,
-                        file_df=zf.open(name),
-                    )
-
-                    # If there is no scoring to be done, just clean and save survey
-                    if this_key["index"] is None and this_key["invert"] is None:
-                        this_survey.clean(minimal=True)
-                    else:
-                        this_survey.parse_and_score()
-                    this_survey.export(out_dir)
+                    process(Path(name))
+        elif item.suffix == ".csv":
+            process(item)
 
 
 def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
-    """Take all processed data and create a summary sheet saved to `data_dir`.
+    """Take all processed data and create a summary Excel doc saved to `out_path`.
+    First tab is a data summary, second tab is a basic statistics summary,
+    remaining tabs contain detailed scoring for each individual survey
 
     Args:
-        data_dir (str): Path to directory in which both `processed` data exists and summary sheet will be saved
+        data_dir (str): Path to directory in which `processed` data exists.
+        out_path (str): Directory to which summary sheet should be saved.
         key_path (str): Path to CSV key containing survey scoring rules
+        out_name (str, optional): Name of output file. Defaults to "SURVEY_SUMMARY".
     """
     data_dir = Path(data_dir)
     survey_key = load_key(key_path)
@@ -222,7 +225,11 @@ def aggregate_survey(data_dir, out_path, key_path, out_name="SURVEY_SUMMARY"):
             )
 
         # Key = readable survey name, value = dataframe of scores for every instance of this survey
-        aggs_dict[survey_name] = pd.DataFrame(agg_list, columns=cols)
+        if survey_name in aggs_dict.keys():
+            # Surveys may have different IDs but the same "common" name.
+            aggs_dict[survey_name] = pd.concat([aggs_dict[survey_name], pd.DataFrame(agg_list, columns=cols)])
+        else:
+            aggs_dict[survey_name] = pd.DataFrame(agg_list, columns=cols)
 
     # Extract statistics from lists of sums (that are buried in stats dict)
     subj_ids = []
@@ -519,7 +526,7 @@ def cli():
         "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_SURVEY
     )
     parser_process_survey.add_argument(
-        "-o", "--out_root", type=str, nargs="?", default=OUT_ROOT_SURVEY
+        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_SURVEY
     )
     parser_process_survey.add_argument(
         "-k", "--key_path", type=str, nargs="?", default=KEY_PATH
@@ -527,6 +534,7 @@ def cli():
     parser_process_survey.add_argument("--subject_id", type=str, nargs="?", default="")
     parser_process_survey.add_argument("--survey_id", type=str, nargs="?", default="")
     parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
+    parser_process_survey.add_argument("--use_zips", type=bool, default=False)
     parser_process_survey.set_defaults(func=process_survey)
 
     # Aggregate Survey
