@@ -6,8 +6,8 @@ from utils import load_key
 
 
 class Survey(object):
-    """Object that contains all relevant information for a given survey
-    """
+    """Object that contains all relevant information for a given survey"""
+
     def __init__(
         self,
         file,
@@ -17,6 +17,7 @@ class Survey(object):
         subject_id="",
         parse_err=-201,
         skip_ans=-101,
+        validation_err=-301,
         file_df="",
     ):
         """Builds Survey object
@@ -29,7 +30,7 @@ class Survey(object):
             subject_id (str, optional): Subject ID for this survey. Defaults to "".
             parse_err (int, optional): Value to assign to an answer if there is a parsing error. Defaults to -201.
             skip_ans (int, optional): Value to assign to an answer if it is skipped. Defaults to -101.
-            file_df (str, optional): Path to the CSV survey file that is readable by pandas. 
+            file_df (str, optional): Path to the CSV survey file that is readable by pandas.
                 If file is in a zip file, `file_df` should be zipfile.ZipFile.open(). Defaults to "".
 
         Raises:
@@ -40,6 +41,7 @@ class Survey(object):
         self.df = pd.read_csv(file_df, na_filter=False)
         self.parse_err = parse_err
         self.skip_ans = skip_ans
+        self.validation_err = validation_err
         self.file = Path(file)
         self.subject_id = subject_id
 
@@ -78,14 +80,27 @@ class Survey(object):
         Returns:
             int: Scored value
         """
+        # Cleaning just in case
         ans_opts = [i.strip() for i in ans_opts]
         answer = answer.strip() if isinstance(answer, str) else answer
+
+        # Check for multiplier
         mult = self.key["multiplier"] if self.key["multiplier"] else 1
+
+        # Score
         try:
+            # This question needs to be inverted (a match on index 0 = max possible score)
             if self.key["invert"] or (
                 self.key["invert_qs"] and q_num + 1 in self.key["invert_qs"]
             ):
                 return mult * ((len(ans_opts) - 1 - int(answer)) + self.key["index"])
+            # This question has unique scoring rules
+            elif (
+                self.key["unique_score"]
+                and q_num + 1 in self.key["unique_score"].keys()
+            ):
+                return self.key["unique_score"][q_num + 1][int(answer)]
+            # Score according to index (a match on index 0 = min possible score)
             else:
                 return mult * (self.key["index"] + int(answer))
         except ValueError:  # answer non-numeric (expected most of the time)
@@ -96,6 +111,11 @@ class Survey(object):
                     return mult * (
                         (len(ans_opts) - 1 - ans_opts.index(answer)) + self.key["index"]
                     )
+                elif (
+                    self.key["unique_score"]
+                    and q_num + 1 in self.key["unique_score"].keys()
+                ):
+                    return self.key["unique_score"][q_num + 1][ans_opts.index(answer)]
                 else:
                     return mult * (self.key["index"] + ans_opts.index(answer))
             except ValueError:
@@ -114,80 +134,97 @@ class Survey(object):
             int: Scored answer
         """
 
-        # Catch skippable rows before extracting answer options
-        if not score_flag:
-            return None
-        elif ans == "NO_ANSWER_SELECTED":
-            return self.skip_ans
-
         # Beiwe separates questions with semicolon
         sc_space_sep = False
+        options_replaced = False
 
-        # Check if expected splits exist (e.g., "opt 1;opt 2;...")
-        if re.findall(r"\S;\S", opts):
-            splits = re.finditer(r"\S;\S", opts)  # Use them if they exist
-        # elif re.findall(r"\S;\s\S", opts) and not re.findall(r",", opts) and self.id in SURVEY_ANSWER_OPTIONS.keys():
-        elif self.id in SURVEY_ANSWER_OPTIONS.keys():
-            # If there is a replacement for this exact survey, use it
-            opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
-            splits = re.finditer(r"\S;\S", opts)
-        else:
-            # Assume splits are separated with spaces, too (e.g., "opt 1; opt 2; ...")
-            splits = re.finditer(r"\S;\s\S", opts)
-            sc_space_sep = True
+        # Catch skippable rows before extracting answer options
+        if not score_flag:
+            return None, options_replaced
+        elif ans == "NO_ANSWER_SELECTED":
+            return self.skip_ans, options_replaced
 
         # Containers
         ans_opts = []
         prev_split = []  # Will be an re.Match object
 
+        # Check if expected splits exist (e.g., "opt 1;opt 2;...")
+        if re.findall(r"\S;\S", opts):
+            splits = re.finditer(r"\S;\S", opts)  # Use them if they exist
+        elif self.id in SURVEY_ANSWER_OPTIONS.keys():
+            # If there is a replacement for this exact survey, use it
+            ans_opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
+            options_replaced = True
+        else:
+            # Assume splits are separated with spaces, too (e.g., "opt 1; opt 2; ...")
+            splits = re.finditer(r"\S;\s\S", opts)
+            sc_space_sep = True
+
         # Extract each answer option
         # Cannot simply use "split(";") because options may contain semicolons"
-        while True:
-            try:
-                this_split = splits.__next__()
-                if not prev_split:  # First option
-                    ans_opts.append(opts[0 : this_split.start() + 1])
-                else:
-                    if (
-                        not sc_space_sep and this_split.start() - prev_split.end() == 1
-                    ) or (
-                        sc_space_sep and this_split.start() - prev_split.end() == 2
-                    ):  # Single character option
-                        # Take just that character
+        if not options_replaced:
+            while True:
+                try:
+                    this_split = splits.__next__()
+                    if not prev_split:  # First option
+                        ans_opts.append(opts[0 : this_split.start() + 1])
+                    else:
+                        if (
+                            not sc_space_sep
+                            and this_split.start() - prev_split.end() == 1
+                        ) or (
+                            sc_space_sep and this_split.start() - prev_split.end() == 2
+                        ):  # Single character option
+                            # Take just that character
+                            ans_opts.extend(
+                                [opts[prev_split.end() - 1], opts[this_split.start()]]
+                            )
+                        else:
+                            # End of previous split and start of current one
+                            ans_opts.append(
+                                opts[prev_split.end() - 1 : this_split.start() + 1]
+                            )
+                    prev_split = this_split  # Update
+                # Length of iterable isn't know prior to looping. Catch for last ans option.
+                except StopIteration:
+                    # If match starts with split pattern, single character ans opt exists
+                    # Extract both single character option and whatever is remaining
+                    last_block = opts[this_split.end() - 1 : len(opts)]
+                    if re.match(r"\S;\S", last_block):
                         ans_opts.extend(
-                            [opts[prev_split.end() - 1], opts[this_split.start()]]
+                            [
+                                opts[this_split.end() - 1],
+                                opts[this_split.end() + 1 : len(opts)],
+                            ]
+                        )
+                    elif re.match(r"\S;\s\S", last_block):
+                        ans_opts.extend(
+                            [
+                                opts[this_split.end() - 1],
+                                opts[this_split.end() + 2 : len(opts)],
+                            ]
                         )
                     else:
-                        # End of previous split and start of current one
-                        ans_opts.append(
-                            opts[prev_split.end() - 1 : this_split.start() + 1]
-                        )
-                prev_split = this_split  # Update
-            # Length of iterable isn't know prior to looping. Catch for last ans option.
-            except StopIteration:
-                # If match starts with split pattern, single character ans opt exists
-                # Extract both single character option and whatever is remaining
-                last_block = opts[this_split.end() - 1 : len(opts)]
-                if re.match(r"\S;\S", last_block):
-                    ans_opts.extend(
-                        [
-                            opts[this_split.end() - 1],
-                            opts[this_split.end() + 1 : len(opts)],
-                        ]
-                    )
-                elif re.match(r"\S;\s\S", last_block):
-                    ans_opts.extend(
-                        [
-                            opts[this_split.end() - 1],
-                            opts[this_split.end() + 2 : len(opts)],
-                        ]
-                    )
-                else:
-                    # Final answer option is remainder of "q"
-                    ans_opts.append(last_block)
-                break
+                        # Final answer option is remainder of "q"
+                        ans_opts.append(last_block)
+                    break
 
-        return self.score(ans_opts, ans, q_num)
+        # Number of answer options extracted from survey is incorrect according to the key.
+        # Either parsed incorrectly or original survey was improperly constructed (may be the case for surveys collected prior to 2025)
+        if (
+            not options_replaced
+            and "n_ans_options"
+            in self.key.index  # Prevents errors since n_ans_options is not technically mandatory
+            and self.key["n_ans_options"]
+            and len(ans_opts) != self.key["n_ans_options"][q_num]
+        ):
+            if self.id in SURVEY_ANSWER_OPTIONS.keys():
+                ans_opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
+                options_replaced = True
+            else:
+                return self.validation_err, options_replaced
+
+        return self.score(ans_opts, ans, q_num), options_replaced
 
     def clean(self, minimal=False):
         """Cleans the survey dataframe by removing brackets,
@@ -195,7 +232,7 @@ class Survey(object):
         and replacing " ;" and " ; " with ";" in question answer options.
 
         Args:
-            minimal (bool, optional): Minimal cleaning -- likely True most of the time. 
+            minimal (bool, optional): Minimal cleaning -- likely True most of the time.
                 If False, drops yes/no, and not presented, "only answer if" + no answer selected question rows.
                 Defaults to False.
         """
@@ -239,10 +276,10 @@ class Survey(object):
         self.df.reset_index(drop=True, inplace=True)
 
     def mark_to_score(self):
-        """Adds a "score_flag" column to self.df 
-            containing boolean values indicating whether this question should be scored or not. 
-            Marks as false: "not presented, only answer if + no answer selected, and yes/no question rows.
-            Similar to those that would be dropped if `minimal = True` in `self.clean()`
+        """Adds a "score_flag" column to self.df
+        containing boolean values indicating whether this question should be scored or not.
+        Marks as false: "not presented, only answer if + no answer selected, and yes/no question rows.
+        Similar to those that would be dropped if `minimal = True` in `self.clean()`
         """
         score_flag = [True] * len(self.df)
         idx = self.df.loc[
@@ -262,6 +299,7 @@ class Survey(object):
             )
         ].index
 
+        # Include additionally specified questions to skip
         addl_skip = (
             [x - 1 for x in self.key["no_score"]] if self.key["no_score"] else []
         )
@@ -277,7 +315,7 @@ class Survey(object):
         self.mark_to_score()
 
         # Score each answer
-        self.df["score"] = [
+        self.df[["score", "options_replaced"]] = [
             self.eval_question(opts, ans, q_num, score_flag)
             for q_num, (opts, ans, score_flag) in enumerate(
                 zip(
@@ -292,36 +330,29 @@ class Survey(object):
 
     def export(self, out_dir, out_prefix=""):
         """Saves `self.df` to specified location.
-            Appends "_OUT" always. Appends "_OUT_SKIPPED_ANS" and "_OUT_PARSE_ERR" 
-            if self.skipped_ans or self.parse_err are in self.df.score. 
+            Appends "_OUT" always. Appends "_OUT_SKIPPED_ANS" and "_OUT_PARSE_ERR"
+            if self.skipped_ans or self.parse_err are in self.df.score.
 
         Args:
             out_dir (str): Path to directory into which `self.df` should be saved.
             out_prefix (str, optional): Prefix to prepend to filename. Defaults to "".
         """
+        out_suffix = "_OUT"
+
         if not out_prefix:
             out_prefix = self.subject_id
         if "score" in self.df.columns:
             if self.skip_ans in self.df["score"].unique():
-                self.df.to_csv(
-                    Path(out_dir).joinpath(
-                        out_prefix + "_" + self.file.stem + "_OUT_SKIPPED_ANS.csv"
-                    ),
-                    index=False,
-                    header=True,
-                )
-                return
+                out_suffix = "_OUT_SKIPPED_ANS"
             elif self.parse_err in self.df["score"].unique():
-                self.df.to_csv(
-                    Path(out_dir).joinpath(
-                        out_prefix + "_" + self.file.stem + "_OUT_PARSE_ERR.csv"
-                    ),
-                    index=False,
-                    header=True,
-                )
-                return
+                out_suffix = "_OUT_PARSE_ERR"
+            elif self.validation_err in self.df["score"].unique():
+                out_suffix = "_OUT_VALIDATION_ERR"
+
         self.df.to_csv(
-            Path(out_dir).joinpath(out_prefix + "_" + self.file.stem + "_OUT.csv"),
+            Path(out_dir).joinpath(
+                out_prefix + "_" + self.file.stem + out_suffix + ".csv"
+            ),
             index=False,
             header=True,
         )

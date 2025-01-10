@@ -1,14 +1,15 @@
-from survey import Survey
-from pathlib import Path
 import statistics
 import pandas as pd
 import warnings
 import argparse
 import zipfile
 
+from pathlib import Path
 from datetime import datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 from functools import reduce
+
+from survey import Survey
 from utils import call_function_with_args, load_key, excel_style
 from acoustic import process_spa
 from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
@@ -56,7 +57,11 @@ def process_survey(
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
     key_df = load_key(key_path)
-    extensions = {".csv", ".zip"} if use_zips else {".csv"} # zip file control is done here
+    extensions = (
+        {".csv", ".zip"} if use_zips else {".csv"}
+    )  # zip file control is done here
+    # Exclude the to-be-created dir to be safe (user may be intending to overwrite without deleting the folder first)
+    skip_dirs += [out_dir.stem]
 
     # Inner func (DRY)
     def process(file):
@@ -67,7 +72,7 @@ def process_survey(
             print(f"Survey ID '{file.parent.name}' not found in key. Skipping...")
             return
 
-        # Standard file structure for Beiwe downloads 
+        # Standard file structure for Beiwe downloads
         this_subj_id = file.parent.parent.parent.name
 
         # TODO: Allow for multiple subjects, surveys to be specified
@@ -85,7 +90,7 @@ def process_survey(
                 key=this_key,
                 subject_id=this_subj_id,
                 file_df=zf.open(name),
-            ) # zip file requires special handling
+            )  # zip file requires special handling
             if item.suffix == ".zip"
             else Survey(file=file, key=this_key, subject_id=this_subj_id)
         )
@@ -96,19 +101,17 @@ def process_survey(
         else:
             this_survey.parse_and_score()
         this_survey.export(this_out_dir)
-        
+
     # Main func -- Iterate recursively through everything in data_dir
     for item in Path(data_dir).glob("**/*"):
         # Check that this item is not meant to be skipped and that it the file extension is intended
-        if (
-            set(item.parts) & set(skip_dirs) or item.suffix not in extensions
-        ):
+        if set(item.parts) & set(skip_dirs) or item.suffix not in extensions:
             continue
 
         # Zip needs secondary loop. It is treated as a top-level dir
         if item.suffix == ".zip":
             zf = zipfile.ZipFile(item)
-            # Go through every file (name) in zip file  
+            # Go through every file (name) in zip file
             for name in zf.namelist():
                 # Skips "__MACOS" folders and non-csv files
                 if name.startswith("__") or not name.endswith(".csv"):
@@ -140,7 +143,8 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
         if not spath.is_dir():
             continue
         # survey_id is spath.name
-        survey_name = survey_key[spath.name]["name"]
+        this_key = survey_key[spath.name]
+        survey_name = this_key["name"]
         agg_list = []  # Reset aggregate dataframe every new survey
         for fpath in spath.glob("*.csv"):
             # Collect metadata
@@ -165,11 +169,13 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
                 sum_field = "PARSING ERROR"
             elif fpath.stem.endswith("SKIPPED_ANS"):
                 sum_field = "SKIPPED ANSWER"
+            elif fpath.stem.endswith("VALIDATION_ERR"):
+                sum_field = "VALIDATION ERROR"
             elif is_nonnumeric:
                 sum_field = "NON-NUMERIC SURVEY"
             else:
                 this_df.score = pd.to_numeric(this_df.score, errors="coerce")
-                sum_field = this_df.score.sum()
+                sum_field = float(this_df.score.sum())
 
             # Add this survey's data to aggregate "dataframe" (list, really)
             # Get subscores if ALSFRS
@@ -177,17 +183,16 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
                 agg_list.append(
                     [subject_id, date, time] + this_df.answer.to_list() + [sum_field]
                 )
-            elif "ALSFRS" in survey_name:
+            # elif "ALSFRS" in survey_name:
+            elif "subscores" in this_key.index:
                 res = (
                     [subject_id, date, time]
                     + this_df.score.to_list()
                     + [
-                        float(this_df.score[0:3].sum()),
-                        float(this_df.score[3:7].sum()),
-                        float(this_df.score[7:10].sum()),
-                        float(this_df.score[10:13].sum()),
-                        sum_field,
+                        float(this_df.score[inds].sum())
+                        for inds in this_key.subscores.values()
                     ]
+                    + [sum_field]
                 )
                 # Replace erroring subscores with nan
                 agg_list.append(
@@ -211,12 +216,13 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
                 else:
                     stats[subject_id] = {spath.name: [this_df.score.sum()]}
 
-        # Create column headers (add subscores for ALSFRS)
-        if "ALSFRS" in survey_name:
+        # Create column headers
+        if "subscores" in this_key.index:
             cols = (
                 ["Subject ID", "date", "time"]
                 + this_df["question text"].to_list()
-                + ["Bulbar", "Fine Motor", "Gross Motor", "Respiratory", "sum"]
+                + list(this_key.subscores.keys())
+                + ["sum"]
             )
         else:
             cols = (
@@ -228,7 +234,9 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
         # Key = readable survey name, value = dataframe of scores for every instance of this survey
         if survey_name in aggs_dict.keys():
             # Surveys may have different IDs but the same "common" name.
-            aggs_dict[survey_name] = pd.concat([aggs_dict[survey_name], pd.DataFrame(agg_list, columns=cols)])
+            aggs_dict[survey_name] = pd.concat(
+                [aggs_dict[survey_name], pd.DataFrame(agg_list, columns=cols)]
+            )
         else:
             aggs_dict[survey_name] = pd.DataFrame(agg_list, columns=cols)
 
@@ -363,7 +371,7 @@ def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_i
 
 
 def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
-    """Runs Forest.Jasmine's GPS analysis with some user interaction and 
+    """Runs Forest.Jasmine's GPS analysis with some user interaction and
     additional helpful info printed
 
     Args:
@@ -562,7 +570,7 @@ def combine_summaries(
 
 
 def cli():
-    """Sets up and runs argparser. 
+    """Sets up and runs argparser.
     Takes in command line arguments and dispatches to correct function.
     """
     parser = argparse.ArgumentParser()
