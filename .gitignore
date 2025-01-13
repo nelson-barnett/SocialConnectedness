@@ -2,3 +2,5 @@ data/
 notes/
 results/
 **/__pycache__
+.vscode/**/*
+!.vscode/launch.json
