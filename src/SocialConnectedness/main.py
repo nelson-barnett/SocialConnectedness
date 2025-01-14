@@ -469,14 +469,13 @@ def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
         )
 
 
-def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY", subject_id=""):
+def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
     """Collects data from `process_gps` in `data_dir` into a summary sheet in `out_dir`.
 
     Args:
         data_dir (str): Path to directory in which data exists
         out_dir (str): Path to directory into which summary will be saved
         out_name (str, optional): Name of the summary file. Defaults to "GPS_SUMMARY".
-        subject_id (str, optional): Subject id to process. Defaults to "".
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
@@ -484,8 +483,6 @@ def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY", subject_id=""):
     df_list = []
     for file in Path(data_dir).glob("**/*.csv"):
         this_id = file.stem
-        if subject_id and subject_id != this_id:
-            continue
         df = pd.read_csv(file)
         is_cont, start_day, end_day = find_n_cont_days(df, n=30)
 
@@ -658,7 +655,6 @@ def cli():
     parser_agg_gps.add_argument(
         "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
     )
-    parser_agg_gps.add_argument("--subject_id", type=str, nargs="?", default="")
     parser_agg_gps.set_defaults(func=aggregate_gps)
 
     # Combine summaries
