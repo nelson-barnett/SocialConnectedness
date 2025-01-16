@@ -1,4 +1,3 @@
-import statistics
 import pandas as pd
 import warnings
 import argparse
@@ -7,9 +6,8 @@ import zipfile
 from pathlib import Path
 from datetime import datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
-from functools import reduce
 
-from survey import BeiweSurvey, RedcapSurvey
+from survey import BeiweSurvey, RedcapSurvey, aggregate_beiwe, aggregate_redcap
 from utils import call_function_with_args, excel_style
 from acoustic import process_spa
 from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
@@ -151,174 +149,21 @@ def process_survey(
 
 
 def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
-    """Take all processed data and create a summary Excel doc saved to `out_dir`.
-    First tab is a data summary, second tab is a basic statistics summary,
-    remaining tabs contain detailed scoring for each individual survey
+    beiwe_summary, beiwe_stats, beiwe_agg_dict = aggregate_beiwe(data_dir, key_path)
+    redcap_agg_dict = aggregate_redcap(data_dir, key_path)
 
-    Args:
-        data_dir (str): Path to directory in which `processed` data exists.
-        out_dir (str): Directory to which summary sheet should be saved.
-        key_path (str): Path to CSV key containing survey scoring rules
-        out_name (str, optional): Name of output file. Defaults to "SURVEY_SUMMARY".
-    """
-    data_dir = Path(data_dir)
-    survey_key = load_key(key_path)
+    # Combine
+    agg_dict = redcap_agg_dict | beiwe_agg_dict
 
-    # Aggregate
-    aggs_dict = {}  # Dictionary of dataframes
-    stats = {}  # Dictionary (keys = subject ids) of dictionaries (keys = survey ids, values = list of survey score sums)
-    for spath in data_dir.glob("*"):
-        if not spath.is_dir():
-            continue
-        # survey_id is spath.name
-        this_key = survey_key[spath.name]
-        survey_name = this_key["name"]
-        agg_list = []  # Reset aggregate dataframe every new survey
-        for fpath in spath.glob("*.csv"):
-            # Collect metadata
-            file = fpath.stem
-            us_ind = file.find("_")
-            sp_ind = file.find(" ")
-
-            subject_id = file[0:us_ind]
-            date = file[us_ind + 1 : sp_ind]
-            time = file[sp_ind + 1 : file.find("+")]
-
-            # Parse datetime
-            # dt = file[us_ind + 1 : file.find("+")]
-            # datetime.strptime(dt, "%Y-%m-%d %H_%M_%S")
-
-            # Load file
-            this_df = pd.read_csv(fpath)
-            is_nonnumeric = "score" not in this_df.columns
-
-            # Establish sum
-            if fpath.stem.endswith("PARSE_ERR"):
-                sum_field = "PARSING ERROR"
-            elif fpath.stem.endswith("SKIPPED_ANS"):
-                sum_field = "SKIPPED ANSWER"
-            elif fpath.stem.endswith("VALIDATION_ERR"):
-                sum_field = "VALIDATION ERROR"
-            elif is_nonnumeric:
-                sum_field = "NON-NUMERIC SURVEY"
-            else:
-                this_df.score = pd.to_numeric(this_df.score, errors="coerce")
-                sum_field = float(this_df.score.sum())
-
-            # Add this survey's data to aggregate "dataframe" (list, really)
-            # Get subscores if ALSFRS
-            if is_nonnumeric:
-                agg_list.append(
-                    [subject_id, date, time] + this_df.answer.to_list() + [sum_field]
-                )
-            # elif "ALSFRS" in survey_name:
-            elif "subscores" in this_key.index:
-                res = (
-                    [subject_id, date, time]
-                    + this_df.score.to_list()
-                    + [
-                        float(this_df.score[inds].sum())
-                        for inds in this_key.subscores.values()
-                    ]
-                    + [sum_field]
-                )
-                # Replace erroring subscores with nan
-                agg_list.append(
-                    [
-                        float("nan") if not isinstance(x, str) and x < 0 else x
-                        for x in res
-                    ]
-                )
-            else:
-                agg_list.append(
-                    [subject_id, date, time] + this_df.score.to_list() + [sum_field]
-                )
-
-            # Do not add to final statistics if there is missing/bad data
-            if not isinstance(sum_field, str):
-                if subject_id in stats.keys():
-                    if spath.name in stats[subject_id].keys():
-                        stats[subject_id][spath.name].append(this_df.score.sum())
-                    else:
-                        stats[subject_id][spath.name] = [this_df.score.sum()]
-                else:
-                    stats[subject_id] = {spath.name: [this_df.score.sum()]}
-
-        # Create column headers
-        if "subscores" in this_key.index:
-            cols = (
-                ["Subject ID", "date", "time"]
-                + this_df["question text"].to_list()
-                + list(this_key.subscores.keys())
-                + ["sum"]
-            )
-        else:
-            cols = (
-                ["Subject ID", "date", "time"]
-                + this_df["question text"].to_list()
-                + ["sum"]
-            )
-
-        # Key = readable survey name, value = dataframe of scores for every instance of this survey
-        if survey_name in aggs_dict.keys():
-            # Surveys may have different IDs but the same "common" name.
-            aggs_dict[survey_name] = pd.concat(
-                [aggs_dict[survey_name], pd.DataFrame(agg_list, columns=cols)]
-            )
-        else:
-            aggs_dict[survey_name] = pd.DataFrame(agg_list, columns=cols)
-
-    # Extract statistics from lists of sums (that are buried in stats dict)
-    subj_ids = []
-    surv_names = []
-    n = []
-    avgs = []
-    stds = []
-    for s_id, survey_dicts in stats.items():
-        for survey_id, survey_sum in survey_dicts.items():
-            subj_ids.append(s_id)
-            surv_names.append(survey_key[survey_id]["name"])
-            n.append(len(survey_sum))
-            avgs.append(statistics.fmean(survey_sum))
-            if len(survey_sum) > 1:
-                stds.append(
-                    statistics.stdev([float(x) for x in survey_sum])
-                )  # statistics.stdev errors on list of numpy floats
-            else:
-                stds.append(float("nan"))
-
-    # Build DF
-    stats_df = pd.DataFrame(
-        {
-            "Subject ID": subj_ids,
-            "Survey Name": surv_names,
-            "n": n,
-            "Mean": avgs,
-            "STD": stds,
-        }
-    )
-
-    # Create summary sheet with all survey data
-    summary = []
-    for name, df in aggs_dict.items():
-        new_date = "date_" + name
-        new_time = "time_" + name
-        sum_df = df.rename(columns={"sum": name, "date": new_date, "time": new_time})
-        summary.append(sum_df[["Subject ID", new_date, new_time, name]])
-    df_merged = reduce(
-        lambda left, right: pd.merge(left, right, on=["Subject ID"], how="outer"),
-        summary,
-    )
-
-    # Loop through aggregated dataframes and save to separate sheets
+    # Write
     with pd.ExcelWriter(
         Path(out_dir).joinpath(out_name + ".xlsx"),
         engine="xlsxwriter",
         engine_kwargs={"options": {"strings_to_numbers": True}},
     ) as writer:
-        df_merged.to_excel(writer, sheet_name="Summary", index=False)
-        stats_df.to_excel(writer, sheet_name="Stats", index=False)
-        for name, df in aggs_dict.items():
+        beiwe_summary.to_excel(writer, sheet_name="Beiwe Summary", index=False)
+        beiwe_stats.to_excel(writer, sheet_name="Beiwe Stats", index=False)
+        for name, df in agg_dict.items():
             df.to_excel(writer, sheet_name=name, index=False)
 
 
