@@ -1,62 +1,36 @@
-import pandas as pd
 import inspect
 
 
-def load_key(fpath):
-    """Loads and processes survey key
+def row_to_dict(
+    row,
+    row_sep_str,
+    kv_sep_str,
+    parse_list,
+    parse_keys,
+    parse_vals=True,
+    list_sep_char=",",
+    add_to_vals=0,
+):
+    """Returns a dictionary made from `row`. Assumes row is of the form "key1:val1,val2,val3;key2:val1,val2,val3..." """
+    D = {}
+    for x in row.split(row_sep_str):
+        sep_ind = x.find(kv_sep_str)
+        key = int(x[:sep_ind]) if x[:sep_ind].isdigit() and parse_keys else x[:sep_ind]
 
-    Args:
-        fpath (str): Path to survey key CSV or XLSX.
+        if parse_list:
+            val = [
+                int(y) + add_to_vals if y.isdigit() and parse_vals else y.strip()
+                for y in x[sep_ind + len(kv_sep_str) : :].split(list_sep_char)
+            ]
+        else:
+            val = (
+                int(x[sep_ind + len(kv_sep_str) : :]) + add_to_vals
+                if x[sep_ind + len(kv_sep_str) : :].isdigit() and parse_vals
+                else x[sep_ind + len(kv_sep_str) : :].strip()
+            )
 
-    Returns:
-        DataFrame: Key formatted such that columns are survey ids
-    """
-
-    def to_dict(row, add_to_vals=0):
-        """Returns a dictionary made from `row`. Assumes row is of the form "key1:val1,val2,val3;key2:val1,val2,val3..." """
-        D = {}
-        for x in row.split(";"):
-            sep_ind = x.find(":")
-            key = int(x[:sep_ind]) if x[:sep_ind].isdigit() else x[:sep_ind]
-            val = [int(y) + add_to_vals for y in x[sep_ind + 1 : :].split(",")]
-            D[key] = val
-        return D
-
-    def to_list(df, name):
-        return [
-            x if not isinstance(x, str) else [int(y) for y in x.split(",")]
-            for x in df[name]
-        ]
-
-    # No need to error if key is in .xlsx format instead of csv
-    try:
-        key = pd.read_csv(fpath)
-    except UnicodeDecodeError:
-        key = pd.read_excel(fpath)
-
-    # Convert string of invert, no_score vals to list
-    key["invert_qs"] = to_list(key, "invert_qs")
-    key["no_score"] = to_list(key, "no_score")
-    
-    # Optional column
-    if "n_ans_options" in key.columns:
-        key["n_ans_options"] = to_list(key, "n_ans_options")
-         
-    # Parse subscores and unique rules to dict
-    # Subtract 1 from indices of subscores
-    key["subscores"] = [
-        x if not isinstance(x, str) else to_dict(x, -1) for x in key["subscores"]
-    ]
-    key["unique_score"] = [
-        x if not isinstance(x, str) else to_dict(x) for x in key["unique_score"]
-    ]
-
-    key = key.T
-    return (
-        key.rename(columns=key.loc["id"])
-        .drop(key.index[0])
-        .replace({float("nan"): None})
-    )
+        D[key] = val
+    return D
 
 
 def call_function_with_args(func, args):

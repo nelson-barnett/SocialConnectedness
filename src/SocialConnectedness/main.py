@@ -9,8 +9,8 @@ from datetime import datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 from functools import reduce
 
-from survey import Survey
-from utils import call_function_with_args, load_key, excel_style
+from survey import BeiweSurvey, RedcapSurvey
+from utils import call_function_with_args, excel_style
 from acoustic import process_spa
 from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
@@ -56,16 +56,16 @@ def process_survey(
     # Setup
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
-    key_df = load_key(key_path)
     extensions = (
         {".csv", ".zip"} if use_zips else {".csv"}
     )  # zip file control is done here
     # Exclude the to-be-created dir to be safe (user may be intending to overwrite without deleting the folder first)
     skip_dirs += [out_dir.stem]
 
-    # Inner func (DRY)
-    def process(file):
+    ###### Inner funcs
+    def process_beiwe(file):
         # Don't error if this survey isn't in key. Print message and move on
+        key_df = BeiweSurvey.load_key(key_path, "Beiwe")
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
@@ -85,14 +85,14 @@ def process_survey(
 
         # Generate survey object
         this_survey = (
-            Survey(
+            BeiweSurvey(
                 file=file,
                 key=this_key,
                 subject_id=this_subj_id,
                 file_df=zf.open(name),
             )  # zip file requires special handling
             if item.suffix == ".zip"
-            else Survey(file=file, key=this_key, subject_id=this_subj_id)
+            else BeiweSurvey(file=file, key=this_key, subject_id=this_subj_id)
         )
 
         # If there is no scoring to be done, just clean and save survey
@@ -102,7 +102,30 @@ def process_survey(
             this_survey.parse_and_score()
         this_survey.export(this_out_dir)
 
-    # Main func -- Iterate recursively through everything in data_dir
+    def process_redcap(file):
+        # Don't error if this survey isn't in key. Print message and move on
+        this_key = RedcapSurvey.load_key(key_path, file.stem)
+
+        # Make out dir in specified path + survey id
+        this_out_dir = out_dir.joinpath(file.stem)
+        this_out_dir.mkdir(exist_ok=True, parents=True)
+
+        # Generate survey object
+        this_survey = (
+            RedcapSurvey(
+                file=file,
+                key=this_key,
+                file_df=zf.open(name),
+            )  # zip file requires special handling
+            if item.suffix == ".zip"
+            else RedcapSurvey(file=file, key=this_key)
+        )
+
+        # If there is no scoring to be done, just clean and save survey
+        this_survey.process()
+        this_survey.export(this_out_dir)
+
+    ###### Main func -- Iterate recursively through everything in data_dir
     for item in Path(data_dir).glob("**/*"):
         # Check that this item is not meant to be skipped and that it the file extension is intended
         if set(item.parts) & set(skip_dirs) or item.suffix not in extensions:
@@ -116,10 +139,15 @@ def process_survey(
                 # Skips "__MACOS" folders and non-csv files
                 if name.startswith("__") or not name.endswith(".csv"):
                     continue
+                elif "redcap" in Path(name).parent.stem.lower():
+                    process_redcap(Path(name))
                 else:
-                    process(Path(name))
+                    process_beiwe(Path(name))
         elif item.suffix == ".csv":
-            process(item)
+            if "redcap" in item.parent.stem.lower():
+                process_redcap(item)
+            else:
+                process_beiwe(item)
 
 
 def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):

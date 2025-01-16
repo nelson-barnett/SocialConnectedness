@@ -2,10 +2,10 @@ import pandas as pd
 from pathlib import Path
 import re
 from constants import SURVEY_ANSWER_OPTIONS
-from utils import load_key
+from utils import row_to_dict
 
 
-class Survey(object):
+class BeiweSurvey(object):
     """Object that contains all relevant information for a given survey"""
 
     def __init__(
@@ -30,6 +30,7 @@ class Survey(object):
             subject_id (str, optional): Subject ID for this survey. Defaults to "".
             parse_err (int, optional): Value to assign to an answer if there is a parsing error. Defaults to -201.
             skip_ans (int, optional): Value to assign to an answer if it is skipped. Defaults to -101.
+            validation_err (int, optional): Value to assign to an answer if validation of question failed. Defaults to -301.
             file_df (str, optional): Path to the CSV survey file that is readable by pandas.
                 If file is in a zip file, `file_df` should be zipfile.ZipFile.open(). Defaults to "".
 
@@ -65,7 +66,7 @@ class Survey(object):
         else:
             try:
                 # Loading the key will always give the full df so no need for extra conditionals
-                self.key = load_key(key_path)[self.id]
+                self.key = BeiweSurvey.load_key(key_path)[self.id]
             except KeyError:
                 raise Exception("Survey ID not found in key")
 
@@ -121,7 +122,7 @@ class Survey(object):
             except ValueError:
                 return self.parse_err
 
-    def eval_question(self, opts, ans, q_num, score_flag):
+    def eval_question(self, opts, ans, q_num, score_flag, question_id):
         """Splits answer options and returns answer score
 
         Args:
@@ -153,7 +154,7 @@ class Survey(object):
             splits = re.finditer(r"\S;\S", opts)  # Use them if they exist
         elif self.id in SURVEY_ANSWER_OPTIONS.keys():
             # If there is a replacement for this exact survey, use it
-            ans_opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
+            ans_opts = SURVEY_ANSWER_OPTIONS[self.id][question_id]
             options_replaced = True
         else:
             # Assume splits are separated with spaces, too (e.g., "opt 1; opt 2; ...")
@@ -219,12 +220,25 @@ class Survey(object):
             and len(ans_opts) != self.key["n_ans_options"][q_num]
         ):
             if self.id in SURVEY_ANSWER_OPTIONS.keys():
-                ans_opts = SURVEY_ANSWER_OPTIONS[self.id][q_num]
+                ans_opts = SURVEY_ANSWER_OPTIONS[self.id][question_id]
                 options_replaced = True
             else:
                 return self.validation_err, options_replaced
 
-        return self.score(ans_opts, ans, q_num), options_replaced
+        # If ans_opts is a list of lists, which is possible if using replacement options
+        # since different survey years have same question ids with different answer option formats,
+        # Go through all sets of options and return if it scores it sucessfully
+        if any(isinstance(el, list) for el in ans_opts):
+            for curr_ans_opts in ans_opts:
+                score = self.score(curr_ans_opts, ans, q_num)
+                if score != self.parse_err:
+                    return score, options_replaced
+        else:  # ans_options is a single list of options
+            return self.score(ans_opts, ans, q_num), options_replaced
+
+        # If list of lists loop didn't return, return whatever it's got
+        # Will always be self.parse_err, True
+        return score, options_replaced
 
     def clean(self, minimal=False):
         """Cleans the survey dataframe by removing brackets,
@@ -316,12 +330,13 @@ class Survey(object):
 
         # Score each answer
         self.df[["score", "options_replaced"]] = [
-            self.eval_question(opts, ans, q_num, score_flag)
-            for q_num, (opts, ans, score_flag) in enumerate(
+            self.eval_question(opts, ans, q_num, score_flag, question_id)
+            for q_num, (opts, ans, score_flag, question_id) in enumerate(
                 zip(
                     self.df["question answer options"],
                     self.df["answer"],
                     self.df["score_flag"],
+                    self.df["question id"],
                 )
             )
         ]
@@ -356,3 +371,201 @@ class Survey(object):
             index=False,
             header=True,
         )
+
+    @staticmethod
+    def load_key(fpath, sheet_name):
+        """Loads and processes survey key
+
+        Args:
+            fpath (str): Path to survey key CSV or XLSX.
+
+        Returns:
+            DataFrame: Key formatted such that columns are survey ids
+        """
+
+        def to_list(df, name):
+            return [
+                x if not isinstance(x, str) else [int(y) for y in x.split(",")]
+                for x in df[name]
+            ]
+
+        key = pd.read_excel(fpath, sheet_name=sheet_name)
+
+        # Convert string of invert, no_score vals to list
+        key["invert_qs"] = to_list(key, "invert_qs")
+        key["no_score"] = to_list(key, "no_score")
+
+        # Optional column
+        if "n_ans_options" in key.columns:
+            key["n_ans_options"] = to_list(key, "n_ans_options")
+
+        # Parse subscores and unique rules to dict
+        # Subtract 1 from indices of subscores
+        key["subscores"] = [
+            x
+            if not isinstance(x, str)
+            else row_to_dict(
+                x,
+                row_sep_str=";",
+                kv_sep_str=":",
+                parse_list=True,
+                parse_keys=True,
+                add_to_vals=-1,
+            )
+            for x in key["subscores"]
+        ]
+        key["unique_score"] = [
+            x
+            if not isinstance(x, str)
+            else row_to_dict(
+                x, row_sep_str=";", kv_sep_str=":", parse_list=True, parse_ints=True
+            )
+            for x in key["unique_score"]
+        ]
+
+        key = key.T
+        return (
+            key.rename(columns=key.loc["id"])
+            .drop(key.index[0])
+            .replace({float("nan"): None})
+        )
+
+
+class RedcapSurvey(object):
+    def __init__(
+        self,
+        file,
+        key_path="",
+        key=None,
+        id="",
+        file_df="",
+    ):
+        """Builds Survey object
+
+        Args:
+            file (str): Full path to a CSV survey file (Beiwe output)
+            key_path (str, optional): Path to the survey key CSV file. Defaults to "".
+            key (Union[Series, None], optional): Series from key specific to this survey. Defaults to None.
+            id (str, optional): Survey ID. Defaults to "".
+            file_df (str, optional): Path to the CSV survey file that is readable by pandas.
+                If file is in a zip file, `file_df` should be zipfile.ZipFile.open(). Defaults to "".
+
+        Raises:
+            Exception: Survey ID not found in key
+            Exception: Survey ID and key ID do not match. Make sure correct key is being passed.
+        """
+        file_df = file_df if file_df else file
+        self.df = pd.read_csv(file_df, na_filter=False)
+        self.file = Path(file)
+
+        # No need for checks here because errors will appear in key validation
+        self.id = id if id else file.stem
+
+        # key supersedes key_path if both are passed
+        if isinstance(key, pd.DataFrame) and not key.empty:
+            self.key = key
+        elif key_path:
+            try:
+                # Loading the key will always give the full df so no need for extra conditionals
+                self.key = RedcapSurvey.load_key(key_path, self.id)
+            except ValueError:  # ID doesn't exist as a sheet
+                raise Exception("Survey ID not found in key")
+        else:
+            raise Exception(
+                "Either a non-empty key dataframe or a valid key_path must be passed"
+            )
+
+    @staticmethod
+    def load_key(fpath, sheet_name):
+        """Loads and processes survey key
+
+        Args:
+            fpath (str): Path to survey key CSV or XLSX.
+
+        Returns:
+            DataFrame: Key parsed for use in survey processing
+        """
+        key = pd.read_excel(fpath, sheet_name=sheet_name)
+        key.rename(
+            columns={
+                "Choices, Calculations, OR Slider Labels": "choices",
+                "Variable / Field Name": "question",
+            },
+            inplace=True,
+        )
+
+        key["choices"] = [
+            x
+            if not isinstance(x, str)
+            else row_to_dict(
+                x,
+                row_sep_str=" | ",
+                kv_sep_str=", ",
+                parse_list=False,
+                parse_keys=False,
+            )
+            for x in key["choices"]
+        ]
+        return key
+
+    def process(self):
+        # Drop rows where all data columns are empty
+        data_cols = [
+            x for x in self.df.columns if x not in ["record_id", "redcap_event_name"]
+        ]
+        self.df.dropna(how="all", subset=data_cols, inplace=True)
+        self.df = self.df.reset_index()
+
+        D = {}  # Keys = column name (question shorthand), values = parsed column data
+        for this_label, this_col in self.df.items():  # Iterate through columns
+            # Get question label as it appears in the key
+            if "___" in this_label:  # Checkbox answer type
+                question = this_label[: this_label.find("___")]
+            else:
+                question = this_label
+
+            if question in self.key["question"].values:
+                this_q_ser = self.key.loc[self.key["question"] == question]
+                
+                if this_q_ser["Field Type"].values[0] == "yesno":
+                    this_q_key = {"0": "no", "1": "yes"}
+                else:
+                    this_q_key = this_q_ser["choices"].values[0]
+                
+                # Translate answers based on key
+                if isinstance(this_q_key, dict):
+                    # Conditionals in comprehension may be unnecessary, but they're good safety
+                    D[this_label] = [
+                        this_q_key[x] if this_q_key and x in this_q_key.keys() else x
+                        for x in this_col
+                    ]
+                # No "translation" to do, convert series to list and add as dict value
+                else:
+                    D[this_label] = list(this_col)
+            else:
+                D[this_label] = list(this_col)
+
+        # Replace df with processed data
+        self.df = pd.DataFrame(D)
+
+    def export(self, out_dir, out_prefix=""):
+        """Saves `self.df` to specified location.
+            Appends "_OUT" always.
+
+        Args:
+            out_dir (str): Path to directory into which `self.df` should be saved.
+            out_prefix (str, optional): Prefix to prepend to filename. Defaults to "".
+        """
+        if out_prefix:
+            out_prefix += "_"
+
+        self.df.to_csv(
+            Path(out_dir).joinpath(out_prefix + self.file.stem + "_OUT.csv"),
+            index=False,
+            header=True,
+        )
+
+
+# fpath = "L:/Research Project Current/Social Connectedness/Nelson/dev/REDCap Demographics Survey/Initial Demographic Data Information.csv"
+# dfpath = "L:/Research Project Current/Social Connectedness/Nelson/dev/REDCap Demographics Survey/Redcap Export - Initial Demographic & Beiwe ID.csv"
+# df = pd.read_csv(dfpath)
