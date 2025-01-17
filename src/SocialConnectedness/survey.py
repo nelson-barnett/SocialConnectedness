@@ -1,8 +1,8 @@
 import pandas as pd
 from pathlib import Path
 import re
-from constants import SURVEY_ANSWER_OPTIONS
-from utils import row_to_dict
+from SocialConnectedness.constants import SURVEY_ANSWER_OPTIONS
+from SocialConnectedness.utils import row_to_dict
 
 import statistics
 from functools import reduce
