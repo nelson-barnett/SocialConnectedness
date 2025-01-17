@@ -1,7 +1,7 @@
 ##### SETUP
 # Change these locations according to your file structure/naming conventions
 $DATA_DIR_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
-$PROCESSED_DIR_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results_w_redcap"
+$PROCESSED_DIR_SURVEY = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
 $SURVEY_KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.xlsx"
 $FILE_NAME_SURVEY_SUMMARY = "SURVEY_SUMMARY"
 
@@ -25,14 +25,21 @@ $FILE_NAME_COMBINED_SUMMARY = "COMBINED_SUMMARY"
 ## process_survey
 # python -m SocialConnectedness process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH
 
-## To skip certain directories, add them one by one. To process data in zip files, pass the flag "--use_zips" (no following value needed):
-# python -m SocialConnectedness process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips
+## To skip certain directories, add them one by one. 
+## To only process certain subject or survey ids, add them in the same way
+## To process data in zip files, pass the flag "--use_zips" (no value needed)
+## To skip over processing REDCap data, if it's encountered, pass the flag "--skip_redcap" (no value needed):
+# python -m SocialConnectedness process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips --subject_ids "subj1" "subj2" --survey_ids "surveyid123" "surveyid44444" --skip_redcap
+
 
 ## aggregate_survey
 # python -m SocialConnectedness aggregate_survey --data_dir $PROCESSED_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --out_name $FILE_NAME_SURVEY_SUMMARY
 
 ### Acoustic
 # python -m SocialConnectedness aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY
+
+## If you wish to specify subject IDs to process, add them like so:
+# python -m SocialConnectedness aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY -- subject_ids "s1" "s2"
 
 ### GPS
 ## process_gps

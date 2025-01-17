@@ -83,15 +83,16 @@ _`process_survey`_:
 - data_dir: Path to root directory where data is stored
 - out_dir: Path to directory in which data will be saved
 - key_path: Path to CSV/Excel key containing survey scoring rules
-- subject_id (optional): Individual subject ID to process. Defaults to "".
-- survey_id (optional): Individual survey ID to process. Defaults to "".
-- skip_dirs (optional): List of directories names to skip when looking for data. Does not need to be full path, only dir name. Defaults to [].
+- subject_ids (optional): List of subject IDs to process. Defaults to [].
+- survey_ids (optional): List of survey IDs to process. Defaults to [].
+- skip_dirs (optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
 - use_zips (optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
+- skip_redcap (optional): Flag to skip over processing REDCap data, if it's encountered. Defaults to False.
 
 _Example function call using all arguments_
 
 ```
-python -m SocialConnectedness process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_id "subject1" --survey_id "qqqqqqq123" --skip_dirs "OldBadData" "NewWorseData" --use_zips
+python -m SocialConnectedness process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --skip_redcap
 ```
 
 _`aggregate_survey`_:

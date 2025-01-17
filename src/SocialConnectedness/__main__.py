@@ -25,10 +25,11 @@ def process_survey(
     data_dir,
     out_dir,
     key_path,
-    subject_id="",
-    survey_id="",
+    subject_ids=[],
+    survey_ids=[],
     skip_dirs=[],
     use_zips=False,
+    skip_redcap=False,
 ):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_dir` by survey ID
@@ -37,10 +38,11 @@ def process_survey(
         data_dir (str): Path to root directory where data is stored
         out_dir (str): Path to directory in which data will be saved
         key_path (str): Path to CSV key containing survey scoring rules
-        subject_id (str, optional): Individual subject ID to process. Defaults to "".
-        survey_id (str, optional): Individual survey ID to process. Defaults to "".
-        skip_dirs (list, optional): List of directories names to skip when looking for data. Does not need to be full path, only dir name. Defaults to [].
+        subject_ids (list, optional): List of subject IDs to process. Defaults to [].
+        survey_ids (list, optional): List of survey IDs to process. Defaults to [].
+        skip_dirs (list, optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
         use_zips (bool, optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
+        skip_redcap (bool, optional): Flag to skip over processing REDCap data, if it's encountered. Defaults to False.
     """
     # Setup
     out_dir = Path(out_dir)
@@ -64,8 +66,9 @@ def process_survey(
         # Standard file structure for Beiwe downloads
         this_subj_id = file.parent.parent.parent.name
 
-        # TODO: Allow for multiple subjects, surveys to be specified
-        if subject_id and (this_subj_id != subject_id or file.parent.name != survey_id):
+        if (subject_ids and this_subj_id not in subject_ids) or (
+            survey_ids and file.parent.name not in survey_ids
+        ):
             return
 
         # Make out dir in specified path + survey id
@@ -129,12 +132,18 @@ def process_survey(
                 if name.startswith("__") or not name.endswith(".csv"):
                     continue
                 elif "redcap" in Path(name).parent.stem.lower():
-                    process_redcap(Path(name))
+                    if skip_redcap:
+                        continue
+                    else:
+                        process_redcap(Path(name))
                 else:
                     process_beiwe(Path(name))
         elif item.suffix == ".csv":
             if "redcap" in item.parent.stem.lower():
-                process_redcap(item)
+                if skip_redcap:
+                    continue
+                else:
+                    process_redcap(item)
             else:
                 process_beiwe(item)
 
@@ -158,7 +167,7 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_id=""):
+def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=[]):
     """Collects acoustic data in `data_dir`
     (processed externally in SPA) into a summary sheet in `out_dir`.
 
@@ -173,8 +182,9 @@ def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_i
 
     df_list = []
     for file in Path(data_dir).glob("**/*.xlsx"):
-        if subject_id and subject_id != file.stem[0 : file.stem.find("_")]:
+        if subject_ids and file.stem[0 : file.stem.find("_")] not in subject_ids:
             continue
+
         df_list.append(process_spa(file))
 
     df = pd.concat(df_list, axis=0)
@@ -421,10 +431,11 @@ def cli():
     parser_process_survey.add_argument("-d", "--data_dir", type=str)
     parser_process_survey.add_argument("-o", "--out_dir", type=str)
     parser_process_survey.add_argument("-k", "--key_path", type=str)
-    parser_process_survey.add_argument("--subject_id", type=str, nargs="?", default="")
-    parser_process_survey.add_argument("--survey_id", type=str, nargs="?", default="")
+    parser_process_survey.add_argument("--subject_ids", nargs="*", default=[])
+    parser_process_survey.add_argument("--survey_ids", nargs="*", default=[])
     parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
     parser_process_survey.add_argument("--use_zips", action="store_true")
+    parser_process_survey.add_argument("--skip_redcap", action="store_true")
     parser_process_survey.set_defaults(func=process_survey)
 
     # Aggregate Survey
@@ -444,7 +455,7 @@ def cli():
     parser_agg_ac.add_argument(
         "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
     )
-    parser_agg_ac.add_argument("--subject_id", type=str, nargs="?", default="")
+    parser_agg_ac.add_argument("--subject_id", nargs="*", default=[])
     parser_agg_ac.set_defaults(func=aggregate_acoustic)
 
     # Process GPS
