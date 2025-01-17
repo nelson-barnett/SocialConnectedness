@@ -41,16 +41,17 @@ Then, activate it by running the command below that corresponds to your shell:
 Take note of the python version running in your virtual environment. Make sure it is 3.11 if you plan to process GPS data.
 
 ### Install
-You can install directly from GitHub or from a local version of this code by first cloning this repository.
+You can install directly from GitHub or from a local version of this code by first cloning this repository. 
+With the virtual environment active, run your preferred version:
 
 After cloning:
 ```console
-pip install path/to/SocialConnectedness
+python -m pip install path/to/SocialConnectedness
 ```
 
 From GitHub
 ```console
-pip install git+https://github.com/nelson-barnett/SocialConnectedness
+python -m pip install git+https://github.com/nelson-barnett/SocialConnectedness
 ```
 
 If you plan to run GPS analysis, be sure to install Onella Lab's [forest](https://github.com/onnela-lab/forest).
