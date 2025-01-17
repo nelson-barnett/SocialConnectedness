@@ -5,7 +5,11 @@ import zipfile
 
 from pathlib import Path
 from datetime import datetime
-from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
+
+try:
+    from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
+except ModuleNotFoundError:
+    pass
 
 from survey import BeiweSurvey, RedcapSurvey, aggregate_beiwe, aggregate_redcap
 from utils import call_function_with_args, excel_style
@@ -554,7 +558,6 @@ def cli():
     call_function_with_args(args.func, args)
 
 
-########### RUN ###########
-if __name__ == "__main__":
-    cli()
-    print("Complete!")
+############ RUN ############
+cli()
+print("Complete!")
