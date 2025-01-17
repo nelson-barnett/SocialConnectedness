@@ -11,10 +11,10 @@ try:
 except ModuleNotFoundError:
     pass
 
-from survey import BeiweSurvey, RedcapSurvey, aggregate_beiwe, aggregate_redcap
-from utils import call_function_with_args, excel_style
-from acoustic import process_spa
-from gps import find_n_cont_days, day_to_obs_day, date_series_to_str
+from SocialConnectedness.survey import BeiweSurvey, RedcapSurvey, aggregate_beiwe, aggregate_redcap
+from SocialConnectedness.utils import call_function_with_args, excel_style
+from SocialConnectedness.acoustic import process_spa
+from SocialConnectedness.gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
 DATA_DIR_SURVEY = (
     "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
