@@ -4,29 +4,81 @@
 This repository contains code used to process, aggregate, and analyze data collected from surveys and passive GPS data using the Beiwe app.
 
 ## Setup
+### Install Python
 Install Python: https://www.python.org/downloads/
 
-This project uses Poetry to manage dependencies. 
-Install poetry following the instructions here: https://python-poetry.org/docs/#installing-with-the-official-installer
+**NOTE:**
 
-**NOTE**
 If you plan to run GPS analysis, make sure you are using Python 3.11, 
 as this is what is supported by the source GPS processing code at https://github.com/onnela-lab/forest.
 If you are only running survey processing, Python 3.13 works.
 
+### Set up a virtual environment
+Create a virtual environment. For detailed instructions, see [here](https://docs.python.org/3/library/venv.html).
+
+In brief, in your working directory, run:
+
+```
+python -m venv .venv
+```
+
+to create a folder name ".venv" in the current directory.
+
+Then, activate it by running the command below that corresponds to your shell:
+(copied from python docs linked above)
+
+| Shell | Command |
+|:----- |:------- |  
+| bash/zsh | $ source <venv>/bin/activate |
+| fish | $ source <venv>/bin/activate.fish |
+| csh/tchs | $ source <venv>/bin/activate.csh |
+| pwsh | $ <venv>/bin/Activate.ps1 |
+| cmd.exe | C:\> <venv>\Scripts\activate.bat |
+| PowerShell | PS C:\> <venv>\Scripts\Activate.ps1 |
+
+**NOTE**
+
+Take note of the python version running in your virtual environment. Make sure it is 3.11 if you plan to process GPS data.
+
+### Install
+You can install directly from GitHub or from a local version of this code by first cloning this repository.
+
+After cloning:
+```console
+pip install path/to/SocialConnectedness
+```
+
+From GitHub
+```console
+pip install git+https://github.com/nelson-barnett/SocialConnectedness
+```
+
+If you plan to run GPS analysis, be sure to install Onella Lab's [forest](https://github.com/onnela-lab/forest).
+Their installation procedure is identical.
+
 ## Running Code
-All end-user functions are run from the command line. 
+Running analysis consists of envoking this module along with the specific function you wish to run and any associated arguments.
+
 Almost all functions are split into "processing" and "aggregating" categories.
 Processing functions take raw data and synthesize it into a meaningful form for human analysis.
 Aggregating functions take processed data and combine it into an easily readable format.
 
-To run any function, call it by invoking `poetry run SocialConnectedness/src/SocialConnectedness/main.py FUNC --options`,
-where `FUNC` is the name of the function (described below) and `--options` is are any and all arguments you wish to pass.
+For ease of use, copy the file `run_analysis.ps1` from this repository to your current working directory.
+Edit the paths and variables at the top of the file to your satisfication then uncomment the line(s) with the function(s) you wish to run.
 
+Run analysis by envoking this file:
+```console
+./run_analysis.ps1
+```
+
+**NOTE:**
+
+A similar `.sh` file is on the way soon (1/17/2025).  
+
+### Brief docs
 Below is a description of the tools associated with each type of data for this project. 
-All examples are shown as if SocialConnectedness/src/SocialConnectedness is the current directory
 
-# Survey
+### Survey
 _`process_survey`_:
 - data_dir: Path to root directory where data is stored
 - out_dir: Path to directory in which data will be saved
@@ -38,9 +90,9 @@ _`process_survey`_:
 
 _Example function call using all arguments_
 
-`poetry run SocialConnectedness/src/SocialConnectedness/main.py process_survey --data_dir L:/SocialConnectednessProject/Data/Survey Data
---out_dir L:/SocialConnectednessProject/Data/ProcessedData --key_path C:/Users/MyUser/Desktop/SurveyKey.csv 
---subject_id subject1 --survey_id qqqqqqq123 --skip_dirs OldBadData NewWorseData --use_zips False`
+```
+python -m SocialConnectedness process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_id "subject1" --survey_id "qqqqqqq123" --skip_dirs "OldBadData" "NewWorseData" --use_zips
+```
 
 _`aggregate_survey`_:
 - data_dir: Path to directory in which `processed` data exists.
@@ -50,11 +102,11 @@ _`aggregate_survey`_:
 
 _Example function call using all arguments_
 
-`poetry run SocialConnectedness/src/SocialConnectedness/main.py aggregate_survey --data_dir L:/SocialConnectednessProject/Data/ProcessedData
---out_dir L:/SocialConnectednessProject/Data/ProcessedData --key_path C:/Users/MyUser/Desktop/SurveyKey.csv 
---out_name Best_Survey_Summary_Ever`
+```console
+python -m SocialConnectedness aggregate_survey --data_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --out_name 'Best_Survey_Summary_Ever"
+```
 
-# Acoustic
+### Acoustic
 _`aggregate_acoustic`_:
 - data_dir: Path to directory in which data is stored.
 - out_dir: Path to directory into which summary will be saved
@@ -63,10 +115,11 @@ _`aggregate_acoustic`_:
 
 _Example function call using all arguments_
 
-`poetry run main.py aggregate_acoustic --data_dir L:/SocialConnectednessProject/Data/AcousticData
---out_dir L:/SocialConnectednessProject/Data/ProcessedData --out_name New_Acoustic_Summary1234 --subject_id best_subject`
+```console
+python -m SocialConnectedness aggregate_acoustic --data_dir "L:/SocialConnectednessProject/Data/AcousticData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "New_Acoustic_Summary1234" --subject_id "best_subject"
+```
 
-# GPS
+### GPS
 _`process_gps`_:
 - data_dir: Path to directory in which data is stored.
 - out_dir: Path to directory into which summary will be saved
@@ -75,8 +128,9 @@ _`process_gps`_:
 
 _Example function call using all arguments_
 
-`poetry run main.py process_gps --data_dir L:/SocialConnectednessProject/Data/GPSData
---out_dir L:/SocialConnectednessProject/Data/ProcessedData/GPS --subject_ids subj1 subj2 --quality_thresh 0.1`
+```console
+python -m SocialConnectedness process_gps --data_dir "L:/SocialConnectednessProject/Data/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPS" --subject_ids "subj1" "subj2" --quality_thresh 0.1
+```
 
 _`aggregate_gps`_:
 - data_dir: Path to directory in which processed data exists
@@ -85,10 +139,11 @@ _`aggregate_gps`_:
 
 _Example function call using all arguments_
 
-`poetry run main.py aggregate_gps --data_dir L:/SocialConnectednessProject/Data/ProcessedData/GPSData
---out_dir L:/SocialConnectednessProject/Data/ProcessedData --out_name CoolGPSSUMMARY`
+```
+python -m SocialConnectedness aggregate_gps --data_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "CoolGPSSUMMARY"
+```
 
-# Other
+### Other
 _`combine_summaries`_:
 - out_dir: Directory into which document will be saved
 - acoustic_path (optional): Path to acoustic summary file. Defaults to "".
@@ -98,15 +153,6 @@ _`combine_summaries`_:
 
 _Example function call using all arguments_
 
-`poetry run main.py combine_summaries --out_dir L:/SocialConnectednessProject/Data/ProcessedData
---acoustic_path L:/SocialConnectednessProject/Data/ProcessedData/GPSData/New_Acoustic_Summary1234.xlsx
---gps_path L:/SocialConnectednessProject/Data/ProcessedData/CoolGPSSUMMARY.csv
---survey_path L:/SocialConnectednessProject/Data/ProcessedData/ProcessedData/Best_Survey_Summary_Ever.xlsx
---out_name SUMMARY`
-
-# Tips
-(TODO: write bash/powershell file from which all functions can be run)
-
-
-**NOTE:** Forest must be installed separately following the instructions on the github. 
-Check here: https://python-poetry.org/docs/repositories/#package-source-constrain to see if integration with poetry is possible.
+```
+python -m SocialConnectedness combine_summaries --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --acoustic_path "L:/SocialConnectednessProject/Data/ProcessedData/GPSData/New_Acoustic_Summary1234.xlsx" --gps_path "L:/SocialConnectednessProject/Data/ProcessedData/CoolGPSSUMMARY.csv" --survey_path "L:/SocialConnectednessProject/Data/ProcessedData/ProcessedData/Best_Survey_Summary_Ever.xlsx" --out_name "SUMMARY"
+```

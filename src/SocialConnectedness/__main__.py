@@ -1,5 +1,4 @@
 import pandas as pd
-import warnings
 import argparse
 import zipfile
 
@@ -11,27 +10,15 @@ try:
 except ModuleNotFoundError:
     pass
 
-from SocialConnectedness.survey import BeiweSurvey, RedcapSurvey, aggregate_beiwe, aggregate_redcap
+from SocialConnectedness.survey import (
+    BeiweSurvey,
+    RedcapSurvey,
+    aggregate_beiwe,
+    aggregate_redcap,
+)
 from SocialConnectedness.utils import call_function_with_args, excel_style
 from SocialConnectedness.acoustic import process_spa
 from SocialConnectedness.gps import find_n_cont_days, day_to_obs_day, date_series_to_str
-
-DATA_DIR_SURVEY = (
-    "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_data"
-)
-OUT_ROOT_SURVEY = (
-    "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_results"
-)
-
-DATA_DIR_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/gps_data"
-OUT_ROOT_GPS = "L:/Research Project Current/Social Connectedness/Nelson/dev/gps_results"
-
-DATA_DIR_ACOUSTIC = "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data/spa_outputs"
-OUT_ROOT_ACOUSTIC = (
-    "L:/Research Project Current/Social Connectedness/Nelson/dev/acoustic_analysis_data"
-)
-
-KEY_PATH = "L:/Research Project Current/Social Connectedness/Nelson/dev/survey_key.csv"
 
 
 def process_survey(
@@ -169,27 +156,6 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
         beiwe_stats.to_excel(writer, sheet_name="Beiwe Stats", index=False)
         for name, df in agg_dict.items():
             df.to_excel(writer, sheet_name=name, index=False)
-
-
-def update_survey(data_dir, out_dir, key_path, subject_id="", survey_id=""):
-    """Updates all survey analysis. Packages process and aggregate into one function.
-
-    Args:
-        data_dir (str): Path to directory in which data exists.
-        out_dir (str): Path to directory into which outputs will be saved
-        key_path (str): Path to CSV key containing survey scoring rules
-        subject_id (str, optional): ID of subject whose data should be processed. Defaults to "".
-        survey_id (str, optional): ID of survey to process. Defaults to "".
-    """
-    if not subject_id and not survey_id:
-        warnings.warn(
-            "No subject_id or survey_id specified. Processing and aggregating all data"
-        )
-
-    process_survey(
-        data_dir, out_dir, key_path, subject_id=subject_id, survey_id=survey_id
-    )
-    aggregate_survey(out_dir, out_dir, key_path)
 
 
 def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_id=""):
@@ -452,56 +418,29 @@ def cli():
 
     # Process Survey
     parser_process_survey = subparsers.add_parser("process_survey")
-    parser_process_survey.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_SURVEY
-    )
-    parser_process_survey.add_argument(
-        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_SURVEY
-    )
-    parser_process_survey.add_argument(
-        "-k", "--key_path", type=str, nargs="?", default=KEY_PATH
-    )
+    parser_process_survey.add_argument("-d", "--data_dir", type=str)
+    parser_process_survey.add_argument("-o", "--out_dir", type=str)
+    parser_process_survey.add_argument("-k", "--key_path", type=str)
     parser_process_survey.add_argument("--subject_id", type=str, nargs="?", default="")
     parser_process_survey.add_argument("--survey_id", type=str, nargs="?", default="")
     parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
-    parser_process_survey.add_argument("--use_zips", type=bool, default=False)
+    parser_process_survey.add_argument("--use_zips", action="store_true")
     parser_process_survey.set_defaults(func=process_survey)
 
     # Aggregate Survey
     parser_agg_survey = subparsers.add_parser("aggregate_survey")
-    parser_agg_survey.add_argument(
-        "-d", "--data_dir", type=str, default=OUT_ROOT_SURVEY
-    )
-    parser_agg_survey.add_argument(
-        "-od", "--out_dir", type=str, default=OUT_ROOT_SURVEY
-    )
-    parser_agg_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
+    parser_agg_survey.add_argument("-d", "--data_dir", type=str)
+    parser_agg_survey.add_argument("-od", "--out_dir", type=str)
+    parser_agg_survey.add_argument("-k", "--key_path", type=str)
     parser_agg_survey.add_argument(
         "-on", "--out_name", type=str, default="SURVEY_SUMMARY"
     )
     parser_agg_survey.set_defaults(func=aggregate_survey)
 
-    # Update Survey
-    parser_update_survey = subparsers.add_parser("update_survey")
-    parser_update_survey.add_argument(
-        "-d", "--data_dir", type=str, default=DATA_DIR_SURVEY
-    )
-    parser_update_survey.add_argument(
-        "-o", "--out_dir", type=str, default=OUT_ROOT_SURVEY
-    )
-    parser_update_survey.add_argument("-k", "--key_path", type=str, default=KEY_PATH)
-    parser_update_survey.add_argument("--subject_id", type=str, default="")
-    parser_update_survey.add_argument("--survey_id", type=str, default="")
-    parser_update_survey.set_defaults(func=update_survey)
-
     # Aggregate_acoustic
     parser_agg_ac = subparsers.add_parser("aggregate_acoustic")
-    parser_agg_ac.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_ACOUSTIC
-    )
-    parser_agg_ac.add_argument(
-        "-od", "--out_dir", type=str, nargs="?", default=OUT_ROOT_ACOUSTIC
-    )
+    parser_agg_ac.add_argument("-d", "--data_dir", type=str)
+    parser_agg_ac.add_argument("-od", "--out_dir", type=str)
     parser_agg_ac.add_argument(
         "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
     )
@@ -510,25 +449,18 @@ def cli():
 
     # Process GPS
     parser_process_gps = subparsers.add_parser("process_gps")
-    parser_process_gps.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_GPS
-    )
-    parser_process_gps.add_argument(
-        "-o", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
-    )
+    parser_process_gps.add_argument("-d", "--data_dir", type=str)
+    parser_process_gps.add_argument("-o", "--out_dir", type=str)
     parser_process_gps.add_argument(
         "--subject_ids", nargs="*", default=None, const=None
     )
+    parser_process_gps.add_argument("-qt", "--quality_thresh", type=float, default=0.05)
     parser_process_gps.set_defaults(func=process_gps)
 
     # Aggregate GPS
     parser_agg_gps = subparsers.add_parser("aggregate_gps")
-    parser_agg_gps.add_argument(
-        "-d", "--data_dir", type=str, nargs="?", default=DATA_DIR_GPS
-    )
-    parser_agg_gps.add_argument(
-        "-od", "--out_dir", type=str, nargs="?", default=OUT_ROOT_GPS
-    )
+    parser_agg_gps.add_argument("-d", "--data_dir", type=str)
+    parser_agg_gps.add_argument("-od", "--out_dir", type=str)
     parser_agg_gps.add_argument(
         "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
     )
