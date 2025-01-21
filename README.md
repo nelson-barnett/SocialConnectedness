@@ -88,12 +88,13 @@ _`process_survey`_:
 - survey_ids (optional): List of survey IDs to process. Defaults to [].
 - skip_dirs (optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
 - use_zips (optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
-- skip_redcap (optional): Flag to skip over processing REDCap data, if it's encountered. Defaults to False.
+- only_redcap (optional): Only process redcap data. Mutually exclusive with "only_beiwe". Defaults to False.
+- only_beiwe (optional): Only process beiwe data. Mutually exclusive with "only_redcap". Defaults to False.
 
 _Example function call using all arguments_
 
 ```
-soccon_analysis process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --skip_redcap
+soccon_analysis process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --only_redcap
 ```
 
 _`aggregate_survey`_:

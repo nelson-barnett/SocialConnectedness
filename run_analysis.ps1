@@ -27,8 +27,8 @@ $FILE_NAME_COMBINED_SUMMARY = "COMBINED_SUMMARY"
 ## To skip certain directories, add them one by one. 
 ## To only process certain subject or survey ids, add them in the same way
 ## To process data in zip files, pass the flag "--use_zips" (no value needed)
-## To skip over processing REDCap data, if it's encountered, pass the flag "--skip_redcap" (no value needed):
-# soccon_analysis process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips --subject_ids "subj1" "subj2" --survey_ids "surveyid123" "surveyid44444" --skip_redcap
+## To only process REDCap or Beiwe data, specify one of the mutually exclusive flags "only_beiwe" or "only_redcap":
+# soccon_analysis process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips --subject_ids "subj1" "subj2" --survey_ids "surveyid123" "surveyid44444" --only_redcap
 
 
 ## aggregate_survey
