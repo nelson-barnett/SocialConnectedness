@@ -58,7 +58,7 @@ If you plan to run GPS analysis, be sure to install Onella Lab's [forest](https:
 Their installation procedure is identical.
 
 ## Running Code
-Running analysis consists of envoking this module along with the specific function you wish to run and any associated arguments.
+All analysis functions can be accessed by invoking `soccon_analysis` followed by the function call, as shown below.
 
 Almost all functions are split into "processing" and "aggregating" categories.
 Processing functions take raw data and synthesize it into a meaningful form for human analysis.
@@ -93,7 +93,7 @@ _`process_survey`_:
 _Example function call using all arguments_
 
 ```
-python -m SocialConnectedness process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --skip_redcap
+soccon_analysis process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --skip_redcap
 ```
 
 _`aggregate_survey`_:
@@ -105,7 +105,7 @@ _`aggregate_survey`_:
 _Example function call using all arguments_
 
 ```console
-python -m SocialConnectedness aggregate_survey --data_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --out_name 'Best_Survey_Summary_Ever"
+soccon_analysis aggregate_survey --data_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --out_name 'Best_Survey_Summary_Ever"
 ```
 
 ### Acoustic
@@ -118,7 +118,7 @@ _`aggregate_acoustic`_:
 _Example function call using all arguments_
 
 ```console
-python -m SocialConnectedness aggregate_acoustic --data_dir "L:/SocialConnectednessProject/Data/AcousticData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "New_Acoustic_Summary1234" --subject_id "best_subject"
+soccon_analysis aggregate_acoustic --data_dir "L:/SocialConnectednessProject/Data/AcousticData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "New_Acoustic_Summary1234" --subject_id "best_subject"
 ```
 
 ### GPS
@@ -131,7 +131,7 @@ _`process_gps`_:
 _Example function call using all arguments_
 
 ```console
-python -m SocialConnectedness process_gps --data_dir "L:/SocialConnectednessProject/Data/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPS" --subject_ids "subj1" "subj2" --quality_thresh 0.1
+soccon_analysis process_gps --data_dir "L:/SocialConnectednessProject/Data/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPS" --subject_ids "subj1" "subj2" --quality_thresh 0.1
 ```
 
 _`aggregate_gps`_:
@@ -142,7 +142,7 @@ _`aggregate_gps`_:
 _Example function call using all arguments_
 
 ```
-python -m SocialConnectedness aggregate_gps --data_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "CoolGPSSUMMARY"
+soccon_analysis aggregate_gps --data_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "CoolGPSSUMMARY"
 ```
 
 ### Other
@@ -156,5 +156,5 @@ _`combine_summaries`_:
 _Example function call using all arguments_
 
 ```
-python -m SocialConnectedness combine_summaries --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --acoustic_path "L:/SocialConnectednessProject/Data/ProcessedData/GPSData/New_Acoustic_Summary1234.xlsx" --gps_path "L:/SocialConnectednessProject/Data/ProcessedData/CoolGPSSUMMARY.csv" --survey_path "L:/SocialConnectednessProject/Data/ProcessedData/ProcessedData/Best_Survey_Summary_Ever.xlsx" --out_name "SUMMARY"
+soccon_analysis combine_summaries --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --acoustic_path "L:/SocialConnectednessProject/Data/ProcessedData/GPSData/New_Acoustic_Summary1234.xlsx" --gps_path "L:/SocialConnectednessProject/Data/ProcessedData/CoolGPSSUMMARY.csv" --survey_path "L:/SocialConnectednessProject/Data/ProcessedData/ProcessedData/Best_Survey_Summary_Ever.xlsx" --out_name "SUMMARY"
 ```
