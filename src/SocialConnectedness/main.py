@@ -512,6 +512,6 @@ def cli():
 
 
 ############ RUN ############
-# def main():
-cli()
-print("Complete!")
+def main():
+    cli()
+    print("Complete!")
