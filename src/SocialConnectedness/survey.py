@@ -89,7 +89,7 @@ class BeiweSurvey(object):
         answer = answer.strip() if isinstance(answer, str) else answer
 
         # Check for multiplier
-        mult = self.key["multiplier"] if self.key["multiplier"] else 1
+        mult = self.key["multiplier"] if "multiplier" in self.key and self.key["multiplier"] else 1
 
         # Score
         try:
@@ -218,7 +218,7 @@ class BeiweSurvey(object):
         if (
             not options_replaced
             and "n_ans_options"
-            in self.key.index  # Prevents errors since n_ans_options is not technically mandatory
+            in self.key # Prevents errors since n_ans_options is not technically mandatory
             and self.key["n_ans_options"]
             and len(ans_opts) != self.key["n_ans_options"][q_num]
         ):
@@ -314,6 +314,10 @@ class BeiweSurvey(object):
                 .str.lower()
                 .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
             )
+            | (
+                self.df["question type"] == "free_response"
+            )
+            | (self.df["question type"] == "slider")
         ].index
 
         # Include additionally specified questions to skip
@@ -421,7 +425,7 @@ class BeiweSurvey(object):
             x
             if not isinstance(x, str)
             else row_to_dict(
-                x, row_sep_str=";", kv_sep_str=":", parse_list=True, parse_ints=True
+                x, row_sep_str=";", kv_sep_str=":", parse_list=True, parse_keys=True, parse_vals=True
             )
             for x in key["unique_score"]
         ]
