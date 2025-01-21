@@ -19,37 +19,36 @@ $FILE_NAME_COMBINED_SUMMARY = "COMBINED_SUMMARY"
 
 
 ##### Uncomment the line(s) you want to run
-# "python" may need to be "py" or a specific version depending on your setup
 
 ### Survey
 ## process_survey
-# python -m SocialConnectedness process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH
+# soccon_analysis process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH
 
 ## To skip certain directories, add them one by one. 
 ## To only process certain subject or survey ids, add them in the same way
 ## To process data in zip files, pass the flag "--use_zips" (no value needed)
-## To skip over processing REDCap data, if it's encountered, pass the flag "--skip_redcap" (no value needed):
-# python -m SocialConnectedness process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips --subject_ids "subj1" "subj2" --survey_ids "surveyid123" "surveyid44444" --skip_redcap
+## To only process REDCap or Beiwe data, specify one of the mutually exclusive flags "only_beiwe" or "only_redcap":
+# soccon_analysis process_survey --data_dir $DATA_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --skip_dirs "dir1" "dir2" --use_zips --subject_ids "subj1" "subj2" --survey_ids "surveyid123" "surveyid44444" --only_redcap
 
 
 ## aggregate_survey
-# python -m SocialConnectedness aggregate_survey --data_dir $PROCESSED_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --out_name $FILE_NAME_SURVEY_SUMMARY
+# soccon_analysis aggregate_survey --data_dir $PROCESSED_DIR_SURVEY --out_dir $PROCESSED_DIR_SURVEY --key_path $SURVEY_KEY_PATH --out_name $FILE_NAME_SURVEY_SUMMARY
 
 ### Acoustic
-# python -m SocialConnectedness aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY
+# soccon_analysis aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY
 
 ## If you wish to specify subject IDs to process, add them like so:
-# python -m SocialConnectedness aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY -- subject_ids "s1" "s2"
+# soccon_analysis aggregate_acoustic --data_dir $DATA_DIR_ACOUSTIC --out_dir $PROCESSED_DIR_ACOUSTIC --out_name $FILE_NAME_ACOUSTIC_SUMMARY -- subject_ids "s1" "s2"
 
 ### GPS
 ## process_gps
-# python -m SocialConnectedness process_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --quality_thresh $GPS_QUALITY_THRESH
+# soccon_analysis process_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --quality_thresh $GPS_QUALITY_THRESH
 
 ## To process specific subject IDs. Follow this template:
-# python -m SocialConnectedness process_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --subject_ids "subject1" "subject2"
+# soccon_analysis process_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --subject_ids "subject1" "subject2"
 
 ## aggregate_gps
-# python -m SocialConnectedness aggregate_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --out_name $FILE_NAME_GPS_SUMMARY
+# soccon_analysis aggregate_gps --data_dir $DATA_DIR_GPS --out_dir $PROCESSED_DIR_GPS --out_name $FILE_NAME_GPS_SUMMARY
 
 ## Other
 
@@ -60,9 +59,9 @@ $FILE_NAME_COMBINED_SUMMARY = "COMBINED_SUMMARY"
 # $GPS_SUMMARY_PATH = Join-Path -Path $PROCESSED_DIR_GPS -ChildPath "$FILE_NAME_GPS_SUMMARY.csv"
 
 ## combine all summaries
-# python -m SocialConnectedness combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --survey_path $SURVEY_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH
+# soccon_analysis combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --survey_path $SURVEY_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH
 
 ## All other valid combine_summaries configurations
-# python -m SocialConnectedness combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --survey_path $SURVEY_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH
-# python -m SocialConnectedness combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH 
-# python -m SocialConnectedness combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --survey_path $SURVEY_SUMMARY_PATH
+# soccon_analysis combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --survey_path $SURVEY_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH
+# soccon_analysis combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --gps_path $GPS_SUMMARY_PATH 
+# soccon_analysis combine_summaries --out_dir $COMBINED_SUMMARY_OUT_DIR --out_name $FILE_NAME_COMBINED_SUMMARY --acoustic_path $ACOUSTIC_SUMMARY_PATH --survey_path $SURVEY_SUMMARY_PATH

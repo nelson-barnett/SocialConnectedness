@@ -29,7 +29,8 @@ def process_survey(
     survey_ids=[],
     skip_dirs=[],
     use_zips=False,
-    skip_redcap=False,
+    only_redcap=False,
+    only_beiwe=False,
 ):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_dir` by survey ID
@@ -42,8 +43,15 @@ def process_survey(
         survey_ids (list, optional): List of survey IDs to process. Defaults to [].
         skip_dirs (list, optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
         use_zips (bool, optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
-        skip_redcap (bool, optional): Flag to skip over processing REDCap data, if it's encountered. Defaults to False.
+        only_redcap (bool, optional): Only process redcap data. Mutually exclusive with "only_beiwe". Defaults to False.
+        only_beiwe (bool, optional): Only process beiwe data. Mutually exclusive with "only_redcap". Defaults to False.
     """
+    # Mutually exclusive input checking (redundant b/c checked by argparse)
+    if only_redcap and only_beiwe:
+        raise Exception(
+            "'only_redcap' and 'only_beiwe' are mutually exclusive flags. If you wish to process both survey types, specify neither of these."
+        )
+
     # Setup
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
@@ -132,19 +140,19 @@ def process_survey(
                 if name.startswith("__") or not name.endswith(".csv"):
                     continue
                 elif "redcap" in Path(name).parent.stem.lower():
-                    if skip_redcap:
+                    if only_beiwe:
                         continue
                     else:
                         process_redcap(Path(name))
-                else:
+                elif not only_redcap:
                     process_beiwe(Path(name))
         elif item.suffix == ".csv":
             if "redcap" in item.parent.stem.lower():
-                if skip_redcap:
+                if only_beiwe:
                     continue
                 else:
                     process_redcap(item)
-            else:
+            elif not only_redcap:
                 process_beiwe(item)
 
 
@@ -435,7 +443,9 @@ def cli():
     parser_process_survey.add_argument("--survey_ids", nargs="*", default=[])
     parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
     parser_process_survey.add_argument("--use_zips", action="store_true")
-    parser_process_survey.add_argument("--skip_redcap", action="store_true")
+    me_group_process_survey = parser_process_survey.add_mutually_exclusive_group()
+    me_group_process_survey.add_argument("--only_beiwe", action="store_true")
+    me_group_process_survey.add_argument("--only_redcap", action="store_true")
     parser_process_survey.set_defaults(func=process_survey)
 
     # Aggregate Survey
@@ -502,5 +512,6 @@ def cli():
 
 
 ############ RUN ############
-cli()
-print("Complete!")
+def main():
+    cli()
+    print("Complete!")
