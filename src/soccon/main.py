@@ -1,24 +1,25 @@
-import pandas as pd
 import argparse
 import zipfile
 
 from pathlib import Path
 from datetime import datetime
 
+import pandas as pd
+
 try:
     from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 except ModuleNotFoundError:
     pass
 
-from SocialConnectedness.survey import (
+from soccon.survey import (
     BeiweSurvey,
     RedcapSurvey,
     aggregate_beiwe,
     aggregate_redcap,
 )
-from SocialConnectedness.utils import call_function_with_args, excel_style
-from SocialConnectedness.acoustic import process_spa
-from SocialConnectedness.gps import find_n_cont_days, day_to_obs_day, date_series_to_str
+from soccon.utils import call_function_with_args, excel_style
+from soccon.acoustic import process_spa
+from soccon.gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
 
 def process_survey(

@@ -68,13 +68,16 @@ For ease of use, copy the file `run_analysis.ps1` from this repository to your c
 Edit the paths and variables at the top of the file to your satisfication then uncomment the line(s) with the function(s) you wish to run.
 
 Run analysis by envoking this file:
+
+Windows PowerShell:
 ```console
 ./run_analysis.ps1
 ```
 
-**NOTE:**
-
-A similar `.sh` file is on the way soon (1/17/2025).  
+Bash (Mac):
+```console
+bash run_analysis
+```
 
 ### Brief docs
 Below is a description of the tools associated with each type of data for this project. 
