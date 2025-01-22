@@ -1,7 +1,7 @@
 # Place to write short scripts for development purposes
 from pathlib import Path
-from SocialConnectedness.survey import Survey
-from SocialConnectedness.utils import load_key, call_function_with_args
+from soccon.survey import Survey
+from soccon.utils import load_key, call_function_with_args
 import zipfile
 import argparse
 
