@@ -26,9 +26,9 @@ def process_survey(
     data_dir,
     out_dir,
     key_path,
-    subject_ids=[],
-    survey_ids=[],
-    skip_dirs=[],
+    subject_ids=None,
+    survey_ids=None,
+    skip_dirs=None,
     use_zips=False,
     only_redcap=False,
     only_beiwe=False,
@@ -40,9 +40,9 @@ def process_survey(
         data_dir (str): Path to root directory where data is stored
         out_dir (str): Path to directory in which data will be saved
         key_path (str): Path to CSV key containing survey scoring rules
-        subject_ids (list, optional): List of subject IDs to process. Defaults to [].
-        survey_ids (list, optional): List of survey IDs to process. Defaults to [].
-        skip_dirs (list, optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
+        subject_ids (list, optional): List of subject IDs to process. Defaults to None.
+        survey_ids (list, optional): List of survey IDs to process. Defaults to None.
+        skip_dirs (list, optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to None.
         use_zips (bool, optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
         only_redcap (bool, optional): Only process redcap data. Mutually exclusive with "only_beiwe". Defaults to False.
         only_beiwe (bool, optional): Only process beiwe data. Mutually exclusive with "only_redcap". Defaults to False.
@@ -52,6 +52,8 @@ def process_survey(
         raise Exception(
             "'only_redcap' and 'only_beiwe' are mutually exclusive flags. If you wish to process both survey types, specify neither of these."
         )
+    # Best practice to default to None in function definition
+    skip_dirs = [] if skip_dirs is None else skip_dirs
 
     # Setup
     out_dir = Path(out_dir)
@@ -75,8 +77,8 @@ def process_survey(
         # Standard file structure for Beiwe downloads
         this_subj_id = file.parent.parent.parent.name
 
-        if (subject_ids and this_subj_id not in subject_ids) or (
-            survey_ids and file.parent.name not in survey_ids
+        if (subject_ids is not None and this_subj_id not in subject_ids) or (
+            survey_ids is not None and file.parent.name not in survey_ids
         ):
             return
 
@@ -176,7 +178,7 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=[]):
+def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=None):
     """Collects acoustic data in `data_dir`
     (processed externally in SPA) into a summary sheet in `out_dir`.
 
@@ -191,7 +193,7 @@ def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_i
 
     df_list = []
     for file in Path(data_dir).glob("**/*.xlsx"):
-        if subject_ids and file.stem[0 : file.stem.find("_")] not in subject_ids:
+        if subject_ids is not None and file.stem[0 : file.stem.find("_")] not in subject_ids:
             continue
 
         df_list.append(process_spa(file))
@@ -440,9 +442,9 @@ def cli():
     parser_process_survey.add_argument("-d", "--data_dir", type=str)
     parser_process_survey.add_argument("-o", "--out_dir", type=str)
     parser_process_survey.add_argument("-k", "--key_path", type=str)
-    parser_process_survey.add_argument("--subject_ids", nargs="*", default=[])
-    parser_process_survey.add_argument("--survey_ids", nargs="*", default=[])
-    parser_process_survey.add_argument("--skip_dirs", nargs="*", default=[])
+    parser_process_survey.add_argument("--subject_ids", nargs="*", default=None)
+    parser_process_survey.add_argument("--survey_ids", nargs="*", default=None)
+    parser_process_survey.add_argument("--skip_dirs", nargs="*", default=None)
     parser_process_survey.add_argument("--use_zips", action="store_true")
     me_group_process_survey = parser_process_survey.add_mutually_exclusive_group()
     me_group_process_survey.add_argument("--only_beiwe", action="store_true")
@@ -466,7 +468,7 @@ def cli():
     parser_agg_ac.add_argument(
         "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
     )
-    parser_agg_ac.add_argument("--subject_id", nargs="*", default=[])
+    parser_agg_ac.add_argument("--subject_id", nargs="*", default=None)
     parser_agg_ac.set_defaults(func=aggregate_acoustic)
 
     # Process GPS
