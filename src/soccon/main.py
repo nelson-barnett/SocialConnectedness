@@ -100,7 +100,7 @@ def process_survey(
 
         # If there is no scoring to be done, just clean and save survey
         if this_key["index"] is None and this_key["invert"] is None:
-            this_survey.clean(minimal=True)
+            this_survey.clean_to_save()
         else:
             this_survey.parse_and_score()
         this_survey.export(this_out_dir)

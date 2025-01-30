@@ -89,7 +89,11 @@ class BeiweSurvey(object):
         answer = answer.strip() if isinstance(answer, str) else answer
 
         # Check for multiplier
-        mult = self.key["multiplier"] if "multiplier" in self.key and self.key["multiplier"] else 1
+        mult = (
+            self.key["multiplier"]
+            if "multiplier" in self.key and self.key["multiplier"]
+            else 1
+        )
 
         # Score
         try:
@@ -218,7 +222,7 @@ class BeiweSurvey(object):
         if (
             not options_replaced
             and "n_ans_options"
-            in self.key # Prevents errors since n_ans_options is not technically mandatory
+            in self.key  # Prevents errors since n_ans_options is not technically mandatory
             and self.key["n_ans_options"]
             and len(ans_opts) != self.key["n_ans_options"][q_num]
         ):
@@ -243,15 +247,9 @@ class BeiweSurvey(object):
         # Will always be self.parse_err, True
         return score, options_replaced
 
-    def clean(self, minimal=False):
-        """Cleans the survey dataframe by removing brackets,
-        dropping rows that are not numerically scored,
+    def preprocess(self):
+        """Cleans the survey dataframe by removing brackets
         and replacing " ;" and " ; " with ";" in question answer options.
-
-        Args:
-            minimal (bool, optional): Minimal cleaning -- likely True most of the time.
-                If False, drops yes/no, and not presented, "only answer if" + no answer selected question rows.
-                Defaults to False.
         """
         self.df["question answer options"] = [
             x.replace("[", "").replace("]", "").replace(" ;", ";").replace(" ; ", ";")
@@ -262,41 +260,11 @@ class BeiweSurvey(object):
             for x in self.df["answer"]
         ]
 
-        if minimal:
-            # Remove all non-question and not presented rows
-            self.df.drop(
-                self.df.loc[(self.df["question type"] == "info_text_box")].index,
-                inplace=True,
-            )
-        else:
-            # Remove all non-question and not presented rows
-            self.df.drop(
-                self.df.loc[
-                    (self.df["question type"] == "info_text_box")
-                    | (self.df["answer"] == "NOT_PRESENTED")
-                    | (
-                        (self.df["answer"] == "NO_ANSWER_SELECTED")
-                        & (
-                            self.df["question text"]
-                            .str.lower()
-                            .str.startswith("(only answer if")
-                        )
-                    )
-                    | (
-                        self.df["question answer options"]
-                        .str.lower()
-                        .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
-                    )
-                ].index,
-                inplace=True,
-            )
-        self.df.reset_index(drop=True, inplace=True)
-
     def mark_to_score(self):
         """Adds a "score_flag" column to self.df
         containing boolean values indicating whether this question should be scored or not.
-        Marks as false: "not presented, only answer if + no answer selected, and yes/no question rows.
-        Similar to those that would be dropped if `minimal = True` in `self.clean()`
+        Marks as false: "not presented, only answer if + no answer selected, yes/no question rows,
+        info_text_box, free_response, and slider rows.
         """
         score_flag = [True] * len(self.df)
         idx = self.df.loc[
@@ -315,9 +283,10 @@ class BeiweSurvey(object):
                 .str.contains("(?=.*yes)(?=.*no)")  # yes/no questions
             )
             | (
-                self.df["question type"] == "free_response"
+                self.df["question type"].isin(
+                    ["info_text_box", "free_response", "slider"]
+                )
             )
-            | (self.df["question type"] == "slider")
         ].index
 
         # Include additionally specified questions to skip
@@ -330,9 +299,20 @@ class BeiweSurvey(object):
 
         self.df["score_flag"] = score_flag
 
+    def clean_to_save(self):
+        """Drops 'score_flag' column and 'info_text_box' rows, resets index.
+        """
+        self.df.drop("score_flag", axis=1, errors='ignore', inplace=True)
+        self.df.drop(
+            self.df.loc[self.df["question type"] == "info_text_box"].index,
+            axis=0,
+            inplace=True,
+        )
+        self.df.reset_index(drop=True, inplace=True)
+
     def parse_and_score(self):
-        """Parses a given survey and saves a cleaned and scored csv file"""
-        self.clean(minimal=True)
+        """Parses a given survey and stores a cleaned and scored csv file"""
+        self.preprocess()
         self.mark_to_score()
 
         # Score each answer
@@ -347,8 +327,7 @@ class BeiweSurvey(object):
                 )
             )
         ]
-
-        self.df.drop("score_flag", axis=1, inplace=True)
+        self.clean_to_save()
 
     def export(self, out_dir, out_prefix=""):
         """Saves `self.df` to specified location.
@@ -425,7 +404,12 @@ class BeiweSurvey(object):
             x
             if not isinstance(x, str)
             else row_to_dict(
-                x, row_sep_str=";", kv_sep_str=":", parse_list=True, parse_keys=True, parse_vals=True
+                x,
+                row_sep_str=";",
+                kv_sep_str=":",
+                parse_list=True,
+                parse_keys=True,
+                parse_vals=True,
             )
             for x in key["unique_score"]
         ]
