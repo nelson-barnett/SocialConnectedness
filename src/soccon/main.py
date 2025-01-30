@@ -62,12 +62,15 @@ def process_survey(
         {".csv", ".zip"} if use_zips else {".csv"}
     )  # zip file control is done here
     # Exclude the to-be-created dir to be safe (user may be intending to overwrite without deleting the folder first)
-    skip_dirs += [out_dir.stem]
+    skip_dirs.append(out_dir.stem)
+
+    # Set as None initially for efficient checking
+    key_redcap = None
+    key_beiwe = None
 
     ###### Inner funcs
-    def process_beiwe(file):
+    def process_beiwe(file, key_df):
         # Don't error if this survey isn't in key. Print message and move on
-        key_df = BeiweSurvey.load_key(key_path, "Beiwe")
         try:
             this_key = key_df[file.parent.name]
         except KeyError:
@@ -105,9 +108,16 @@ def process_survey(
             this_survey.parse_and_score()
         this_survey.export(this_out_dir)
 
-    def process_redcap(file):
+    def process_redcap(file, key_df):
         # Don't error if this survey isn't in key. Print message and move on
-        this_key = RedcapSurvey.load_key(key_path, file.stem)
+        this_name = next(
+            (form for form in key_df["Form Name"].unique() if form in file.stem), None
+        )
+        if this_name is None:
+            print(f"Unable to find match for {file.stem} in key. Skipping...")
+            return
+
+        this_key = key_df[key_df["Form Name"].str.contains(this_name)]
 
         # Make out dir in specified path + survey id
         this_out_dir = out_dir.joinpath(file.stem)
@@ -146,17 +156,30 @@ def process_survey(
                     if only_beiwe:
                         continue
                     else:
-                        process_redcap(Path(name))
+                        if key_redcap is None:
+                            key_redcap = RedcapSurvey.load_key(key_path)
+                        process_redcap(Path(name), key_redcap)
                 elif not only_redcap:
-                    process_beiwe(Path(name))
+                    if key_beiwe is None:
+                        key_beiwe = BeiweSurvey.load_key(key_path)
+                    process_beiwe(Path(name), key_beiwe)
         elif item.suffix == ".csv":
+            # If it's a redcap survey
             if "redcap" in item.parent.stem.lower():
-                if only_beiwe:
+                if only_beiwe:  # Skip if only supposed to process Beiwe
                     continue
                 else:
-                    process_redcap(item)
-            elif not only_redcap:
-                process_beiwe(item)
+                    # Only load key once
+                    if key_redcap is None:
+                        key_redcap = RedcapSurvey.load_key(key_path)
+                    process_redcap(item, key_redcap)
+            elif (
+                not only_redcap
+            ):  # Not a redcap survey and not only supposed to process redcap
+                # Only load key once
+                if key_beiwe is None:
+                    key_beiwe = BeiweSurvey.load_key(key_path)
+                process_beiwe(item, key_beiwe)
 
 
 def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
@@ -178,7 +201,9 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=None):
+def aggregate_acoustic(
+    data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=None
+):
     """Collects acoustic data in `data_dir`
     (processed externally in SPA) into a summary sheet in `out_dir`.
 
@@ -193,7 +218,10 @@ def aggregate_acoustic(data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_i
 
     df_list = []
     for file in Path(data_dir).glob("**/*.xlsx"):
-        if subject_ids is not None and file.stem[0 : file.stem.find("_")] not in subject_ids:
+        if (
+            subject_ids is not None
+            and file.stem[0 : file.stem.find("_")] not in subject_ids
+        ):
             continue
 
         df_list.append(process_spa(file))

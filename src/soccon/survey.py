@@ -300,9 +300,8 @@ class BeiweSurvey(object):
         self.df["score_flag"] = score_flag
 
     def clean_to_save(self):
-        """Drops 'score_flag' column and 'info_text_box' rows, resets index.
-        """
-        self.df.drop("score_flag", axis=1, errors='ignore', inplace=True)
+        """Drops 'score_flag' column and 'info_text_box' rows, resets index."""
+        self.df.drop("score_flag", axis=1, errors="ignore", inplace=True)
         self.df.drop(
             self.df.loc[self.df["question type"] == "info_text_box"].index,
             axis=0,
@@ -359,7 +358,7 @@ class BeiweSurvey(object):
         )
 
     @staticmethod
-    def load_key(fpath, sheet_name):
+    def load_key(fpath):
         """Loads and processes survey key
 
         Args:
@@ -375,7 +374,7 @@ class BeiweSurvey(object):
                 for x in df[name]
             ]
 
-        key = pd.read_excel(fpath, sheet_name=sheet_name)
+        key = pd.read_excel(fpath, sheet_name="beiwe")
 
         # Convert string of invert, no_score vals to list
         key["invert_qs"] = to_list(key, "invert_qs")
@@ -458,7 +457,8 @@ class RedcapSurvey(object):
         elif key_path:
             try:
                 # Loading the key will always give the full df so no need for extra conditionals
-                self.key = RedcapSurvey.load_key(key_path, self.id)
+                key_df = RedcapSurvey.load_key(key_path, "redcap")
+                self.key = key_df.loc[key.df["Form Name"] == self.id, :]
             except ValueError:  # ID doesn't exist as a sheet
                 raise Exception("Survey ID not found in key")
         else:
@@ -467,7 +467,7 @@ class RedcapSurvey(object):
             )
 
     @staticmethod
-    def load_key(fpath, sheet_name):
+    def load_key(fpath):
         """Loads and processes survey key
 
         Args:
@@ -476,7 +476,7 @@ class RedcapSurvey(object):
         Returns:
             DataFrame: Key parsed for use in survey processing
         """
-        key = pd.read_excel(fpath, sheet_name=sheet_name)
+        key = pd.read_excel(fpath, sheet_name="redcap")
         key.rename(
             columns={
                 "Choices, Calculations, OR Slider Labels": "choices",
