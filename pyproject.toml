@@ -1,19 +1,24 @@
 [tool.poetry]
-name = "SocialConnectedness"
+name = "soccon"
 version = "0.1.0"
 description = ""
 authors = ["Nelson Barnett"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "3.11"
 pandas = "^2.2.3"
 openpyxl = "^3.1.5"
 xlsxwriter = "^3.2.0"
 matplotlib = "^3.10.0"
+mano = "^0.5.2"
+beiwe-forest = {git = "https://github.com/onnela-lab/forest.git"}
+orjson = "^3.10.15"
 
 [tool.poetry.scripts]
-soccon_analysis = "SocialConnectedness.main:main"
+soccon_analysis = "soccon.main:main"
+beiwe_qual_check = "soccon.quality_check:main"
+make_key = "soccon.make_key:main"
 
 
 [build-system]
