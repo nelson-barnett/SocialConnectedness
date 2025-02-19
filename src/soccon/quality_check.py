@@ -17,7 +17,7 @@ def validate_date(d):
         )
 
 
-def get_beiwe_data(args):
+def download_beiwe_data(args):
     # Validate dates
     if args.time_start is not None:
         validate_date(args.time_start)
@@ -62,7 +62,7 @@ def get_beiwe_data(args):
     return not any(data_folder.iterdir()), data_folder
 
 
-def quality_check(data_dir, subject_id):
+def _quality_check(data_dir, subject_id, n_days_gps):
     out_dir = Path(data_dir).joinpath("processed")
 
     # Validate GPS quality,
@@ -73,68 +73,122 @@ def quality_check(data_dir, subject_id):
         Frequency.DAILY,
         False,
     )
-    
-    gps_summary_df = pd.read_csv(out_dir.joinpath("daily",subject_id), na_filter=False)
-    found_10_cont_days = find_n_cont_days(gps_summary_df, n=10)
+
+    gps_summary_df = pd.read_csv(
+        out_dir.joinpath("daily", f"{subject_id}.csv"), na_filter=False
+    )
+    n_cont_days_found, day_start, day_end = find_n_cont_days(
+        gps_summary_df, n=n_days_gps
+    )
 
     # Count surveys and assess completion
     compute_survey_stats(data_dir, out_dir, "America/New_York")
     survey_submits_path = out_dir.joinpath("summaries", "submits_only.csv")
     survey_df = pd.read_csv(survey_submits_path)
-    summary_df = survey_df["survey id"].value_counts().reset_index()
-    summary_df = summary_df.assign(flag=[False] * len(summary_df))
+    survey_summary_df = survey_df["survey id"].value_counts().reset_index()
+    survey_summary_df = survey_summary_df.assign(flag=[False] * len(survey_summary_df))
 
+    audio_found = False
     for file in out_dir.joinpath("by_survey").iterdir():
         df = pd.read_csv(file, na_filter=False)
         if "audio recording" in df.values:
+            audio_found = True
             continue
         if "NO_ANSWER_SELECTED" in df.values:
-            summary_df.loc[summary_df["survey id"] == file.stem, "flag"] = True
+            survey_summary_df.loc[
+                survey_summary_df["survey id"] == file.stem, "flag"
+            ] = True
 
-    summary_df.to_csv(
-        out_dir.joinpath(f"survey_check_summary_{subject_id}.csv"), index=False, header=True
+    # Build output dfs if necessary
+    if n_cont_days_found:
+        gps_info_df = pd.concat(
+            [day_start.rename("day_start"), day_end.rename("day_end")], axis=1
+        )
+    else:
+        gps_info_df = pd.DataFrame(
+            {
+                "number of continuous days searched for": n_days_gps,
+                f"{n_days_gps} found": n_cont_days_found,
+            }
+        )
+
+    audio_df = pd.DataFrame(
+        {
+            "audio_file_found": [audio_found],
+            "max_freq": [None],
+            "clipping_present": [None],
+            "background_db": [None],
+            "speech_db": [None],
+            "background_speech_diff": [None],
+        }
     )
+
+    with pd.ExcelWriter(
+        out_dir.joinpath(f"survey_check_summary_{subject_id}.xlsx")
+    ) as writer:
+        survey_summary_df.to_excel(
+            writer, sheet_name="survey", index=False, header=True
+        )
+        gps_info_df.to_excel(writer, sheet_name="gps", index=False, header=True)
+        audio_df.to_excel(writer, sheet_name="audio", index=False, header=True)
 
 
 def download_and_check(args):
-    dl_success, data_dir = get_beiwe_data(args)
+    dl_success, data_dir = download_beiwe_data(args)
 
     if not dl_success:
         print("Data download failed. Skipping quality check")
         return
     else:
         for id in args.beiwe_ids:
-            quality_check(data_dir, id)
+            _quality_check(data_dir, id, args.n_days_gps)
 
 
-# TODO: Change this to only call either download_and_check or download via subparser
-# and add new func to call quality check. Add access points in pyproject.toml
-def main():
+# CLI wrapper
+def quality_check_cli():
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(required=True)
+    parser.add_argument("--data_dir", type=str, required=True)
+    parser.add_argument("--subject_id", type=str, required=True)
+    parser.add_argument("--n_days_gps", required=False)
+    args = parser.parse_args()
+    _quality_check(
+        args.data_dir,
+        args.subject_id,
+        args.n_days_gps,
+    )
 
-    parser_get_data = subparsers.add_parser("get_beiwe_data")
-    parser_get_data.add_argument("--keyring_path", type=str, required=True)
-    parser_get_data.add_argument("--keyring_pw", type=str, required=True)
-    parser_get_data.add_argument("--study_id", type=str, required=True)
-    parser_get_data.add_argument("--out_dir", type=str, required=True)
-    parser_get_data.add_argument("--beiwe_ids", nargs="+", required=True)
-    parser_get_data.add_argument("--time_start", type=str, nargs="?", default=None)
-    parser_get_data.add_argument("--time_end", type=str, nargs="?", default=None)
-    parser_get_data.add_argument(
+
+def download_funcs_cli():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument("--keyring_path", type=str, required=True)
+    parent_parser.add_argument("--keyring_pw", type=str, required=True)
+    parent_parser.add_argument("--study_id", type=str, required=True)
+    parent_parser.add_argument("--out_dir", type=str, required=True)
+    parent_parser.add_argument("--beiwe_ids", nargs="+", required=True)
+    parent_parser.add_argument("--time_start", type=str, nargs="?", default=None)
+    parent_parser.add_argument("--time_end", type=str, nargs="?", default=None)
+    parent_parser.add_argument(
         "--data_streams",
         nargs="*",
         default=["gps", "survey_timings", "survey_answers", "audio_recordings"],
     )
-    parser_get_data.add_argument(
+    parent_parser.add_argument(
         "--beiwe_code_path", type=str, default="C:/Users/NB254/Desktop/SaSI Lab/beiwe"
     )
-    parser_get_data.set_defaults(func=get_beiwe_data)
 
-    # parser_qual_check = subparsers.add_parser("quality_check")
-    # parser_qual_check.add_argument("data_dir", required=True)
-    # parser_qual_check.add_argument("subject_id", required=True)
-    # parser_qual_check.set_defaults(func=quality_check)
+    parser_get_data = subparsers.add_parser(
+        "download_beiwe_data", parents=[parent_parser]
+    )
+    parser_get_data.set_defaults(func=download_beiwe_data)
+
+    parser_dl_check = subparsers.add_parser(
+        "download_and_check", parents=[parent_parser]
+    )
+    parser_dl_check.add_argument("--n_days_gps", required=False, default=10)
+    parser_dl_check.set_defaults(func=download_and_check)
 
     args = parser.parse_args()
     args.func(args)

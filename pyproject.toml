@@ -17,7 +17,8 @@ orjson = "^3.10.15"
 
 [tool.poetry.scripts]
 soccon_analysis = "soccon.main:main"
-beiwe_qual_check = "soccon.quality_check:main"
+data_check = "soccon.quality_check:download_funcs_cli"
+run_quality_check = "soccon.quality_check:quality_check_cli"
 make_key = "soccon.make_key:main"
 
 
