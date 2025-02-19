@@ -6,10 +6,7 @@ from datetime import datetime
 
 import pandas as pd
 
-try:
-    from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
-except ModuleNotFoundError:
-    pass
+from forest.jasmine.traj2stats import Frequency, gps_stats_main, Hyperparameters
 
 from soccon.survey import (
     BeiweSurvey,
@@ -317,7 +314,7 @@ def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
         data_dir,
         out_dir,
         "America/New_York",
-        Frequency.HOURLY,
+        Frequency.DAILY,
         True,
         participant_ids=subject_ids,
         parameters=Hyperparameters(quality_threshold=quality_thresh),
