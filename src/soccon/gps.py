@@ -47,7 +47,7 @@ def find_n_cont_days(df, n=30):
     """Determines if `n` consecutive days exist in `df`.
 
     Args:
-        df (DataFrame): Output CSV of `process_gps` loaded in as a pandas DataFrame. 
+        df (DataFrame): Output CSV of `process_gps` loaded in as a pandas DataFrame.
         n (int, optional): Number of days to check for consecutivity. Defaults to 30.
 
     Returns:
@@ -55,6 +55,9 @@ def find_n_cont_days(df, n=30):
         Series: Start day (day, month, year). If no consecutive set of days found, last tested start day.
         Series: End day (day, month, year). If no consecutive set of days found, last tested end day.
     """
+    # Drop all rows containing NaNs
+    df.dropna(how="any", inplace=True)
+
     df_grouped = df.groupby(["year", "month", "day"]).size().reset_index()
     consecutive_found = False  # Initialize so while loop can pass without running and func still returns correctly
     start_ind = 0
@@ -62,7 +65,7 @@ def find_n_cont_days(df, n=30):
 
     # Only able to loop if df is long enough wrt final_ind
     while final_ind <= len(df_grouped) - 1:
-        # Check for consecutivity in this range
+        # Check for continuity in this range
         consecutive_found, final_ind = is_consecutive(
             df_grouped.loc[start_ind:final_ind, "day"],
             df_grouped.loc[start_ind:final_ind, "month"],
@@ -123,6 +126,6 @@ def date_series_to_str(date):
         date (Series): Series containing month, day, year.
 
     Returns:
-        str: Data in `date` formatted as `month/day/year` 
+        str: Data in `date` formatted as `month/day/year`
     """
     return "/".join((str(date["month"]), str(date["day"]), str(date["year"])))
