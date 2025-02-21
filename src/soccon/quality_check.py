@@ -2,7 +2,7 @@ import sys
 import argparse
 import pandas as pd
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from forest.sycamore.base import compute_survey_stats
 from soccon.gps import find_n_cont_days, date_series_to_str
@@ -31,9 +31,9 @@ def download_beiwe_data(args):
 
     # Name output folder
     time_start_label = args.time_start if args.time_start is not None else "first"
-    time_end_label = args.time_end if args.time_end is not None else str(date.today())
-    date_info = "_start-" + time_start_label + "_end-" + time_end_label
-    data_folder = Path(args.out_dir).joinpath("data_download" + date_info)
+    time_end_label = args.time_end if args.time_end is not None else str(date.today())    
+    date_info = f"from-{time_start_label}_to-{time_end_label}-{datetime.now().time().strftime("%H%M%S")}" 
+    data_folder = Path(args.out_dir).joinpath(f"data_download_{date_info}")
 
     # Get data
     kr = read_keyring(args.keyring_path, args.keyring_pw)
@@ -62,17 +62,19 @@ def download_beiwe_data(args):
     return any(data_folder.iterdir()), data_folder
 
 
-def _quality_check(data_dir, subject_id, n_days_gps):
-    out_dir = Path(data_dir).joinpath("processed")
+def _quality_check(data_dir, subject_id, n_days_gps, skip_gps_stats):
+    data_dir = Path(data_dir)
+    out_dir = data_dir.joinpath(f"{subject_id}_processed")
 
     # Validate GPS quality,
-    gps_stats_main(
-        data_dir,
-        out_dir,
-        "America/New_York",
-        Frequency.DAILY,
-        False,
-    )
+    if not skip_gps_stats:
+        gps_stats_main(
+            data_dir,
+            out_dir,
+            "America/New_York",
+            Frequency.DAILY,
+            False,
+        )
 
     gps_summary_df = pd.read_csv(
         out_dir.joinpath("daily", f"{subject_id}.csv"), na_filter=False
@@ -102,22 +104,12 @@ def _quality_check(data_dir, subject_id, n_days_gps):
     # Build output dfs if necessary
 
     
-    if n_cont_days_found:
-        gps_info_df = pd.DataFrame({
-            "number of continuous days searched for": [n_days_gps],
-            f"{n_days_gps} continuous days found": [n_cont_days_found],
-            "day_start": [date_series_to_str(day_start)],
-            "day_end": [date_series_to_str(day_end)],
-        })
-    else:
-        gps_info_df = pd.DataFrame(
-            {
-                "number of continuous days searched for": [n_days_gps],
-                f"{n_days_gps} continuous days found": [n_cont_days_found],
-                "day_start": [None],
-                "day_end": [None],
-            }
-        )
+    gps_info_df = pd.DataFrame({
+        "number of continuous days searched for": [n_days_gps],
+        "closest number of continuous days found": [n_cont_days_found],
+        "day_start": [date_series_to_str(day_start)],
+        "day_end": [date_series_to_str(day_end)],
+    })
 
     audio_df = pd.DataFrame(
         {
@@ -131,7 +123,7 @@ def _quality_check(data_dir, subject_id, n_days_gps):
     )
 
     with pd.ExcelWriter(
-        out_dir.joinpath(f"survey_check_summary_{subject_id}.xlsx")
+        data_dir.joinpath(f"beiwe_data_check_{subject_id}.xlsx")
     ) as writer:
         survey_summary_df.to_excel(
             writer, sheet_name="survey", index=False, header=True
@@ -157,11 +149,13 @@ def quality_check_cli():
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--subject_id", type=str, required=True)
     parser.add_argument("--n_days_gps", type=int, required=False, default=10)
+    parser.add_argument("--skip_gps_stats", action="store_false")
     args = parser.parse_args()
     _quality_check(
         args.data_dir,
         args.subject_id,
         args.n_days_gps,
+        args.skip_gps_stats
     )
 
 

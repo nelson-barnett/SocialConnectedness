@@ -373,9 +373,11 @@ def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
     for file in Path(data_dir).glob("**/*.csv"):
         this_id = file.stem
         df = pd.read_csv(file)
-        is_cont, start_day, end_day = find_n_cont_days(df, n=30)
+        n_cont_days_search = 30
+        n_cont_days_found, start_day, end_day = find_n_cont_days(df, n=n_cont_days_search)
+        has_thirty_cont_days = n_cont_days_found == n_cont_days_search
 
-        if is_cont:
+        if has_thirty_cont_days:
             # Get day number and real date of continuous period
             obs_day_start_num = day_to_obs_day(df, start_day)
             obs_day_end_num = day_to_obs_day(df, end_day)
@@ -408,7 +410,7 @@ def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
         df_avg.insert(0, "subject_id", [this_id])
         df_list.append(
             df_avg.assign(
-                thirty_days_continuous=is_cont,
+                thirty_days_continuous=has_thirty_cont_days,
                 continuous_obs_start_date=obs_day_start_str,
                 continuous_obs_end_date=obs_day_end_str,
                 continuous_obs_start_study_date=obs_day_start_num,
