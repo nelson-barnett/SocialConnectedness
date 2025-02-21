@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import date
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from forest.sycamore.base import compute_survey_stats
-from soccon.gps import find_n_cont_days
+from soccon.gps import find_n_cont_days, date_series_to_str
 
 
 def validate_date(d):
@@ -21,7 +21,7 @@ def download_beiwe_data(args):
     # Validate dates
     if args.time_start is not None:
         validate_date(args.time_start)
-    if args.stime_end is not None:
+    if args.time_end is not None:
         validate_date(args.time_end)
 
     # Setup: add forest_mano and import functions
@@ -59,7 +59,7 @@ def download_beiwe_data(args):
         )
 
     # Returns T/F if data was downloaded, the download path
-    return not any(data_folder.iterdir()), data_folder
+    return any(data_folder.iterdir()), data_folder
 
 
 def _quality_check(data_dir, subject_id, n_days_gps):
@@ -86,7 +86,7 @@ def _quality_check(data_dir, subject_id, n_days_gps):
     survey_submits_path = out_dir.joinpath("summaries", "submits_only.csv")
     survey_df = pd.read_csv(survey_submits_path)
     survey_summary_df = survey_df["survey id"].value_counts().reset_index()
-    survey_summary_df = survey_summary_df.assign(flag=[False] * len(survey_summary_df))
+    survey_summary_df = survey_summary_df.assign(check_this_file=[False] * len(survey_summary_df))
 
     audio_found = False
     for file in out_dir.joinpath("by_survey").iterdir():
@@ -96,19 +96,26 @@ def _quality_check(data_dir, subject_id, n_days_gps):
             continue
         if "NO_ANSWER_SELECTED" in df.values:
             survey_summary_df.loc[
-                survey_summary_df["survey id"] == file.stem, "flag"
+                survey_summary_df["survey id"] == file.stem, "check_this_file"
             ] = True
 
     # Build output dfs if necessary
+
+    
     if n_cont_days_found:
-        gps_info_df = pd.concat(
-            [day_start.rename("day_start"), day_end.rename("day_end")], axis=1
-        )
+        gps_info_df = pd.DataFrame({
+            "number of continuous days searched for": [n_days_gps],
+            f"{n_days_gps} continuous days found": [n_cont_days_found],
+            "day_start": [date_series_to_str(day_start)],
+            "day_end": [date_series_to_str(day_end)],
+        })
     else:
         gps_info_df = pd.DataFrame(
             {
-                "number of continuous days searched for": n_days_gps,
-                f"{n_days_gps} found": n_cont_days_found,
+                "number of continuous days searched for": [n_days_gps],
+                f"{n_days_gps} continuous days found": [n_cont_days_found],
+                "day_start": [None],
+                "day_end": [None],
             }
         )
 
@@ -149,7 +156,7 @@ def quality_check_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--subject_id", type=str, required=True)
-    parser.add_argument("--n_days_gps", required=False)
+    parser.add_argument("--n_days_gps", type=int, required=False, default=10)
     args = parser.parse_args()
     _quality_check(
         args.data_dir,
