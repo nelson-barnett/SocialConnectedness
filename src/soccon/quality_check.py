@@ -168,15 +168,13 @@ def download_funcs_cli():
     parent_parser.add_argument("--study_id", type=str, required=True)
     parent_parser.add_argument("--out_dir", type=str, required=True)
     parent_parser.add_argument("--beiwe_ids", nargs="+", required=True)
+    parent_parser.add_argument("--beiwe_code_path", type=str, required=True)
     parent_parser.add_argument("--time_start", type=str, nargs="?", default=None)
     parent_parser.add_argument("--time_end", type=str, nargs="?", default=None)
     parent_parser.add_argument(
         "--data_streams",
         nargs="*",
         default=["gps", "survey_timings", "survey_answers", "audio_recordings"],
-    )
-    parent_parser.add_argument(
-        "--beiwe_code_path", type=str, default="C:/Users/NB254/Desktop/SaSI Lab/beiwe"
     )
 
     parser_get_data = subparsers.add_parser(
