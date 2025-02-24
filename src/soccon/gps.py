@@ -11,7 +11,8 @@ def is_consecutive(days, months, years):
 
     Returns:
         bool: True if data is consecutive, otherwise False
-        int: Last index checked + 1 (last day checked)
+        int: Last "valid" index. If whole range is continuous, this is equal to length of values,
+            if discontinuity found, this is equal to the ind on which the loop broke
     """
     for ind, (day, day_next, month, month_next, year, year_next) in enumerate(
         zip(days, days[1:], months, months[1:], years, years[1:])
@@ -37,7 +38,7 @@ def is_consecutive(days, months, years):
                 (day + 1 == day_next) and (month == month_next) and (year != year_next)
             )  # Day and month are correct but year isn't
         ):
-            return False, ind + 1
+            return False, ind
         else:
             continue
     return True, ind + 1
@@ -58,7 +59,7 @@ def find_n_cont_days(df, n):
     # Drop all rows containing NaNs
     df.dropna(how="any", inplace=True)
     df_grouped = df.groupby(["year", "month", "day"]).size().reset_index()
-    
+
     start_ind = 0
     final_ind = len(df_grouped) - 1 if n is None or n > len(df_grouped) else n - 1
     max_cont_days = 0
@@ -84,17 +85,17 @@ def find_n_cont_days(df, n):
             )
         else:
             # Update range to check starting at failure point of previous range
-            curr_cont_days = break_ind - start_ind
+            curr_cont_days = break_ind - start_ind + 1
             if curr_cont_days > max_cont_days:
                 max_cont_days = curr_cont_days
                 best_cont_days = [
                     df_grouped.loc[start_ind, ["year", "month", "day"]],
-                    df_grouped.loc[break_ind - 1, ["year", "month", "day"]],
+                    df_grouped.loc[break_ind, ["year", "month", "day"]],
                 ]
             start_ind = break_ind + 1
             # if looking for the max (n is None), only update the starting index
             final_ind = start_ind + n - 1 if n is not None else len(df_grouped) - 1
-            
+
     # Can't find consecutive sequence of days either b/c df_grouped is too short or from is_consecutive
     return max_cont_days, best_cont_days[0], best_cont_days[1]
 
