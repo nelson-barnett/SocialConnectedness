@@ -1,11 +1,13 @@
 import sys
 import argparse
+import re
 import pandas as pd
 from pathlib import Path
 from datetime import date, datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from forest.sycamore.base import compute_survey_stats
-from soccon.gps import find_n_cont_days, date_series_to_str
+from soccon.gps import find_max_cont_days, date_series_to_str
+from soccon.survey import BeiweSurvey
 
 
 def validate_date(d):
@@ -31,8 +33,8 @@ def download_beiwe_data(args):
 
     # Name output folder
     time_start_label = args.time_start if args.time_start is not None else "first"
-    time_end_label = args.time_end if args.time_end is not None else str(date.today())    
-    date_info = f"from-{time_start_label}_to-{time_end_label}-{datetime.now().time().strftime("%H%M%S")}" 
+    time_end_label = args.time_end if args.time_end is not None else str(date.today())
+    date_info = f"from-{time_start_label}_to-{time_end_label}-{datetime.now().time().strftime('%H%M%S')}"
     data_folder = Path(args.out_dir).joinpath(f"data_download_{date_info}")
 
     # Get data
@@ -62,54 +64,82 @@ def download_beiwe_data(args):
     return any(data_folder.iterdir()), data_folder
 
 
-def _quality_check(data_dir, subject_id, n_days_gps, skip_gps_stats):
+def _quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
     data_dir = Path(data_dir)
     out_dir = data_dir.joinpath(f"{subject_id}_processed")
 
+    survey_key = BeiweSurvey.load_key(survey_key_path)
+
     # Validate GPS quality,
     if not skip_gps_stats:
+        print(f"Running GPS stats for subject {subject_id}")
         gps_stats_main(
             data_dir,
             out_dir,
             "America/New_York",
             Frequency.DAILY,
             False,
+            participant_ids=[subject_id],
         )
 
     gps_summary_df = pd.read_csv(
         out_dir.joinpath("daily", f"{subject_id}.csv"), na_filter=False
     )
-    n_cont_days_found, day_start, day_end = find_n_cont_days(
-        gps_summary_df, n=n_days_gps
-    )
+    n_cont_days_found, day_start, day_end = find_max_cont_days(gps_summary_df)
 
     # Count surveys and assess completion
-    compute_survey_stats(data_dir, out_dir, "America/New_York")
+    compute_survey_stats(
+        data_dir, out_dir, "America/New_York", include_audio_surveys=False
+    )
     survey_submits_path = out_dir.joinpath("summaries", "submits_only.csv")
     survey_df = pd.read_csv(survey_submits_path)
     survey_summary_df = survey_df["survey id"].value_counts().reset_index()
-    survey_summary_df = survey_summary_df.assign(check_this_file=[False] * len(survey_summary_df))
 
-    audio_found = False
+    # Add use name
+    survey_summary_df["survey_name"] = [
+        survey_key[id]["name"] if id in survey_key.columns else None
+        for id in survey_df["survey id"]
+    ]
+
+    # Determine if survey was completed or only started
+    survey_dir_names = [
+        file.name for file in data_dir.joinpath(subject_id, "survey_answers").iterdir()
+    ]
+    survey_summary_df["completed"] = [
+        id in survey_dir_names for id in survey_summary_df["survey id"]
+    ]
+
     for file in out_dir.joinpath("by_survey").iterdir():
+        this_id = file.stem
+        this_ind = survey_summary_df["survey id"] == this_id
+        this_row = survey_summary_df.loc[this_ind]
         df = pd.read_csv(file, na_filter=False)
-        if "audio recording" in df.values:
-            audio_found = True
-            continue
-        if "NO_ANSWER_SELECTED" in df.values:
-            survey_summary_df.loc[
-                survey_summary_df["survey id"] == file.stem, "check_this_file"
-            ] = True
+        if not this_row.empty and not this_row.completed.item():
+            survey_summary_df.loc[this_ind, "check_this_file"] = None
+            survey_summary_df.loc[this_ind, "count"] = None
+        else:
+            survey_summary_df.loc[this_ind, "check_this_file"] = (
+                "NO_ANSWER_SELECTED" in df.values
+            )
 
-    # Build output dfs if necessary
+    # Move count column to end
+    survey_summary_df["count"] = survey_summary_df.pop("count")
 
-    
-    gps_info_df = pd.DataFrame({
-        "number of continuous days searched for": [n_days_gps],
-        "closest number of continuous days found": [n_cont_days_found],
-        "day_start": [date_series_to_str(day_start)],
-        "day_end": [date_series_to_str(day_end)],
-    })
+    gps_info_df = pd.DataFrame(
+        {
+            "max number of continuous days found": [n_cont_days_found],
+            "day_start": [date_series_to_str(day_start)],
+            "day_end": [date_series_to_str(day_end)],
+        }
+    )
+
+    # Find audio file
+    audio_found = any(
+        [
+            file.suffix == ".wav"
+            for file in data_dir.joinpath(subject_id, "audio_recordings").glob("**/*")
+        ]
+    )
 
     audio_df = pd.DataFrame(
         {
@@ -122,6 +152,18 @@ def _quality_check(data_dir, subject_id, n_days_gps, skip_gps_stats):
         }
     )
 
+    metadata_df = pd.DataFrame(
+        {
+            "subject_id": [subject_id],
+            "data_check_start_date": re.search("from-(.+?)_to-", str(data_dir)).group(
+                1
+            ),
+            "data_check_end_date": str(data_dir)[
+                str(data_dir).find("to-") + len("to-") :
+            ],
+        }
+    )
+
     with pd.ExcelWriter(
         data_dir.joinpath(f"beiwe_data_check_{subject_id}.xlsx")
     ) as writer:
@@ -130,6 +172,9 @@ def _quality_check(data_dir, subject_id, n_days_gps, skip_gps_stats):
         )
         gps_info_df.to_excel(writer, sheet_name="gps", index=False, header=True)
         audio_df.to_excel(writer, sheet_name="audio", index=False, header=True)
+        metadata_df.to_excel(writer, sheet_name="metadata", index=False, header=True)
+
+    print(f"Quality check complete for subject {subject_id}")
 
 
 def download_and_check(args):
@@ -140,7 +185,7 @@ def download_and_check(args):
         return
     else:
         for id in args.beiwe_ids:
-            _quality_check(data_dir, id, args.n_days_gps)
+            _quality_check(data_dir, id, args.survey_key_path, args.skip_gps_stats)
 
 
 # CLI wrapper
@@ -148,14 +193,14 @@ def quality_check_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--subject_id", type=str, required=True)
-    parser.add_argument("--n_days_gps", type=int, required=False, default=10)
-    parser.add_argument("--skip_gps_stats", action="store_false")
+    parser.add_argument("--survey_key_path", type=str, required=True)
+    parser.add_argument("--skip_gps_stats", action="store_true")
     args = parser.parse_args()
     _quality_check(
         args.data_dir,
         args.subject_id,
-        args.n_days_gps,
-        args.skip_gps_stats
+        args.survey_key_path,
+        args.skip_gps_stats,
     )
 
 
@@ -186,7 +231,8 @@ def download_funcs_cli():
     parser_dl_check = subparsers.add_parser(
         "download_and_check", parents=[parent_parser]
     )
-    parser_dl_check.add_argument("--n_days_gps", required=False, default=10)
+    parser_dl_check.add_argument("--survey_key_path", type=str, required=True)
+    parser_dl_check.add_argument("--skip_gps_stats", action="store_true")
     parser_dl_check.set_defaults(func=download_and_check)
 
     args = parser.parse_args()
