@@ -16,7 +16,12 @@ beiwe-forest = {git = "https://github.com/onnela-lab/forest.git"}
 orjson = "^3.10.15"
 
 [tool.poetry.scripts]
-soccon_analysis = "soccon.main:main"
+process_surveys = "soccon.main:process_survey_cli"
+aggregate_surveys = "soccon.main:agg_survey_cli"
+process_gps = "soccon.main:process_gps_cli"
+aggregate_gps = "soccon.main:agg_gps_cli"
+aggregate_acoustic = "soccon.main:agg_acoustic_cli"
+combine_summaries = "soccon.main:combine_summaries_cli"
 download_and_check = "soccon.quality_check:download_and_check_cli"
 download_beiwe_data = "soccon.quality_check:download_data_cli"
 run_quality_check = "soccon.quality_check:quality_check_cli"

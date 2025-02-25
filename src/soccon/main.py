@@ -14,7 +14,7 @@ from soccon.survey import (
     aggregate_beiwe,
     aggregate_redcap,
 )
-from soccon.utils import call_function_with_args, excel_style
+from soccon.utils import disp_run_info, excel_style
 from soccon.acoustic import process_spa
 from soccon.gps import find_n_cont_days, day_to_obs_day, date_series_to_str
 
@@ -23,12 +23,12 @@ def process_survey(
     data_dir,
     out_dir,
     key_path,
-    subject_ids=None,
-    survey_ids=None,
-    skip_dirs=None,
-    use_zips=False,
-    only_redcap=False,
-    only_beiwe=False,
+    subject_ids,
+    survey_ids,
+    skip_dirs,
+    use_zips,
+    only_redcap,
+    only_beiwe,
 ):
     """Create a cleaned and scored copy of all survey CSVs in `data_dir`
     saved in `out_dir` by survey ID
@@ -179,7 +179,7 @@ def process_survey(
                 process_beiwe(item, key_beiwe)
 
 
-def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
+def aggregate_survey(data_dir, out_dir, key_path, out_name):
     beiwe_summary, beiwe_stats, beiwe_agg_dict = aggregate_beiwe(data_dir, key_path)
     redcap_agg_dict = aggregate_redcap(data_dir, key_path)
 
@@ -198,9 +198,7 @@ def aggregate_survey(data_dir, out_dir, key_path, out_name="SURVEY_SUMMARY"):
             df.to_excel(writer, sheet_name=name, index=False)
 
 
-def aggregate_acoustic(
-    data_dir, out_dir, out_name="ACOUSTIC_SUMMARY", subject_ids=None
-):
+def aggregate_acoustic(data_dir, out_dir, out_name, subject_ids):
     """Collects acoustic data in `data_dir`
     (processed externally in SPA) into a summary sheet in `out_dir`.
 
@@ -259,7 +257,7 @@ def aggregate_acoustic(
         df.to_excel(out_dir.joinpath(out_name + ".xlsx"), index=False)
 
 
-def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
+def process_gps(data_dir, out_dir, subject_ids, quality_thresh):
     """Runs Forest.Jasmine's GPS analysis with some user interaction and
     additional helpful info printed
 
@@ -358,7 +356,7 @@ def process_gps(data_dir, out_dir, subject_ids=None, quality_thresh=0.05):
         )
 
 
-def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
+def aggregate_gps(data_dir, out_dir, out_name):
     """Collects data from `process_gps` in `data_dir` into a summary sheet in `out_dir`.
 
     Args:
@@ -374,7 +372,9 @@ def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
         this_id = file.stem
         df = pd.read_csv(file)
         n_cont_days_search = 30
-        n_cont_days_found, start_day, end_day = find_n_cont_days(df, n=n_cont_days_search)
+        n_cont_days_found, start_day, end_day = find_n_cont_days(
+            df, n=n_cont_days_search
+        )
         has_thirty_cont_days = n_cont_days_found == n_cont_days_search
 
         if has_thirty_cont_days:
@@ -424,7 +424,11 @@ def aggregate_gps(data_dir, out_dir, out_name="GPS_SUMMARY"):
 
 
 def combine_summaries(
-    out_dir, acoustic_path="", gps_path="", survey_path="", out_name="COMBINED_SUMMARY"
+    out_dir,
+    acoustic_path,
+    gps_path,
+    survey_path,
+    out_name,
 ):
     """Combines summary sheets into single sheet
 
@@ -457,91 +461,101 @@ def combine_summaries(
                 df.to_excel(writer, sheet_name=f"{file.stem.lower()}", index=False)
 
 
-def cli():
-    """Sets up and runs argparser.
-    Takes in command line arguments and dispatches to correct function.
-    """
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
+######### CLI #########
+def get_parent_parser(key_path=False, subject_ids=False, out_name=None):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-d", "--data_dir", type=str, required=True)
+    parser.add_argument("-o", "--out_dir", type=str, required=True)
+    if key_path:
+        parser.add_argument("-k", "--key_path", type=str, required=True)
+    if out_name is not None:
+        parser.add_argument("--out_name", type=str, default=out_name)
+    if subject_ids:
+        parser.add_argument("--subject_ids", nargs="*", default=None)
+    return parser
 
-    # Process Survey
-    parser_process_survey = subparsers.add_parser("process_survey")
-    parser_process_survey.add_argument("-d", "--data_dir", type=str)
-    parser_process_survey.add_argument("-o", "--out_dir", type=str)
-    parser_process_survey.add_argument("-k", "--key_path", type=str)
-    parser_process_survey.add_argument("--subject_ids", nargs="*", default=None)
-    parser_process_survey.add_argument("--survey_ids", nargs="*", default=None)
-    parser_process_survey.add_argument("--skip_dirs", nargs="*", default=None)
-    parser_process_survey.add_argument("--use_zips", action="store_true")
-    me_group_process_survey = parser_process_survey.add_mutually_exclusive_group()
-    me_group_process_survey.add_argument("--only_beiwe", action="store_true")
-    me_group_process_survey.add_argument("--only_redcap", action="store_true")
-    parser_process_survey.set_defaults(func=process_survey)
 
-    # Aggregate Survey
-    parser_agg_survey = subparsers.add_parser("aggregate_survey")
-    parser_agg_survey.add_argument("-d", "--data_dir", type=str)
-    parser_agg_survey.add_argument("-od", "--out_dir", type=str)
-    parser_agg_survey.add_argument("-k", "--key_path", type=str)
-    parser_agg_survey.add_argument(
-        "-on", "--out_name", type=str, default="SURVEY_SUMMARY"
-    )
-    parser_agg_survey.set_defaults(func=aggregate_survey)
+def process_survey_cli():
+    parent_parser = get_parent_parser(key_path=True, subject_ids=True)
+    parser = argparse.ArgumentParser("process_survey", parents=[parent_parser])
+    parser.add_argument("--survey_ids", nargs="*", default=None)
+    parser.add_argument("--skip_dirs", nargs="*", default=None)
+    parser.add_argument("--use_zips", action="store_true")
+    me_group = parser.add_mutually_exclusive_group()
+    me_group.add_argument("--only_beiwe", action="store_true")
+    me_group.add_argument("--only_redcap", action="store_true")
+    parser.set_defaults(func=process_survey)
 
-    # Aggregate_acoustic
-    parser_agg_ac = subparsers.add_parser("aggregate_acoustic")
-    parser_agg_ac.add_argument("-d", "--data_dir", type=str)
-    parser_agg_ac.add_argument("-od", "--out_dir", type=str)
-    parser_agg_ac.add_argument(
-        "-on", "--out_name", type=str, default="ACOUSTIC_SUMMARY"
-    )
-    parser_agg_ac.add_argument("--subject_id", nargs="*", default=None)
-    parser_agg_ac.set_defaults(func=aggregate_acoustic)
-
-    # Process GPS
-    parser_process_gps = subparsers.add_parser("process_gps")
-    parser_process_gps.add_argument("-d", "--data_dir", type=str)
-    parser_process_gps.add_argument("-o", "--out_dir", type=str)
-    parser_process_gps.add_argument(
-        "--subject_ids", nargs="*", default=None, const=None
-    )
-    parser_process_gps.add_argument("-qt", "--quality_thresh", type=float, default=0.05)
-    parser_process_gps.set_defaults(func=process_gps)
-
-    # Aggregate GPS
-    parser_agg_gps = subparsers.add_parser("aggregate_gps")
-    parser_agg_gps.add_argument("-d", "--data_dir", type=str)
-    parser_agg_gps.add_argument("-od", "--out_dir", type=str)
-    parser_agg_gps.add_argument(
-        "-on", "--out_name", type=str, nargs="?", default="GPS_SUMMARY"
-    )
-    parser_agg_gps.set_defaults(func=aggregate_gps)
-
-    # Combine summaries
-    parser_combine = subparsers.add_parser("combine_summaries")
-    parser_combine.add_argument("-o", "--out_dir", type=str)
-    parser_combine.add_argument("-ap", "--acoustic_path", type=str, default="")
-    parser_combine.add_argument("-gp", "--gps_path", type=str, default="")
-    parser_combine.add_argument("-sp", "--survey_path", type=str, default="")
-    parser_combine.add_argument(
-        "-on", "--out_name", type=str, default="COMBINED_SUMMARY"
-    )
-    parser_combine.set_defaults(func=combine_summaries)
-
-    # Collect args
     args = parser.parse_args()
+    disp_run_info(args)
+    args.func(
+        args.data_dir,
+        args.out_dir,
+        args.key_path,
+        args.subject_ids,
+        args.survey_ids,
+        args.skip_dirs,
+        args.use_zips,
+        args.only_redcap,
+        args.only_beiwe,
+    )
+    print("Complete!")
 
-    # Print info
-    print("Running", args.func.__name__, "with arguments:")
-    for arg_name, value in vars(args).items():
-        if arg_name != "func":
-            print(arg_name, ": ", value, sep="")
 
-    # Call
-    call_function_with_args(args.func, args)
+def agg_survey_cli():
+    parent_parser = get_parent_parser(key_path=True, out_name="SURVEY_SUMMARY")
+    parser = argparse.ArgumentParser("aggregate_survey", parents=[parent_parser])
+    parser.set_defaults(func=aggregate_survey)
+    args = parser.parse_args()
+    disp_run_info(args)
+    args.func(args.data_dir, args.out_dir, args.key_path, args.out_name)
+    print("Complete!")
 
 
-############ RUN ############
-def main():
-    cli()
+def agg_acoustic_cli():
+    parent_parser = get_parent_parser(
+        key_path=False, subject_ids=True, out_name="ACOUSTIC_SUMMARY"
+    )
+    parser = argparse.ArgumentParser("aggregate_acoustic", parents=[parent_parser])
+    parser.set_defaults(func=aggregate_acoustic)
+    args = parser.parse_args()
+    disp_run_info(args)
+    args.func(args.data_dir, args.out_dir, args.out_name, args.subject_ids)
+    print("Complete!")
+
+
+def process_gps_cli():
+    parent_parser = get_parent_parser(key_path=False, subject_ids=True)
+    parser = argparse.ArgumentParser("process_gps", parents=[parent_parser])
+    parser.add_argument("-qt", "--quality_thresh", type=float, default=0.05)
+    parser.set_defaults(func=process_gps)
+    args = parser.parse_args()
+    disp_run_info(args)
+    args.func(args.data_dir, args.out_dir, args.subject_ids, args.quality_thresh)
+    print("Complete!")
+
+
+def agg_gps_cli():
+    parent_parser = get_parent_parser(key_path=False, out_name="GPS_SUMMARY")
+    parser = argparse.ArgumentParser("aggregate_gps", parents=[parent_parser])
+    parser.set_defaults(func=aggregate_gps)
+    args = parser.parse_args()
+    disp_run_info(args)
+    args.func(args.data_dir, args.out_dir, args.out_name)
+    print("Complete!")
+
+
+def combine_summaries_cli():
+    parser = argparse.ArgumentParser("aggregate_gps")
+    parser.add_argument("-o", "--out_dir", type=str, required=True)
+    parser.add_argument("-ap", "--acoustic_path", type=str, default="")
+    parser.add_argument("-gp", "--gps_path", type=str, default="")
+    parser.add_argument("-sp", "--survey_path", type=str, default="")
+    parser.add_argument("--out_name", type=str, default="COMBINED_SUMMARY")
+    parser.set_defaults(func=combine_summaries)
+    args = parser.parse_args()
+    disp_run_info(args)
+    args.func(
+        args.out_dir, args.acoustic_path, args.gps_path, args.survey_path, args.out_name
+    )
     print("Complete!")

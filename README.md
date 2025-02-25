@@ -54,9 +54,6 @@ From GitHub
 python -m pip install git+https://github.com/nelson-barnett/SocialConnectedness
 ```
 
-If you plan to run GPS analysis, be sure to install Onnela Lab's [forest](https://github.com/onnela-lab/forest).
-Their installation procedure is identical.
-
 ## Running Code
 All analysis functions can be accessed by invoking `soccon_analysis` followed by the function call, as shown below.
 
