@@ -7,6 +7,7 @@ from datetime import date, datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
 from forest.sycamore.base import compute_survey_stats
 from soccon.gps import find_max_cont_days, date_series_to_str
+from soccon.utils import disp_run_info
 from soccon.survey import BeiweSurvey
 
 
@@ -221,8 +222,10 @@ def quality_check_cli():
     parser = argparse.ArgumentParser("quality_check", parents=[parent_parser])
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--subject_id", type=str, required=True)
+    parser.set_defaults(func=quality_check)
     args = parser.parse_args()
-    quality_check(
+    disp_run_info(args)
+    args.func(
         args.data_dir,
         args.subject_id,
         args.survey_key_path,
@@ -233,8 +236,10 @@ def quality_check_cli():
 def download_data_cli():
     parent_parser = get_shared_args_dl_funcs()
     parser = argparse.ArgumentParser("download_beiwe_data", parents=[parent_parser])
+    parser.set_defaults(func=download_beiwe_data)
     args = parser.parse_args()
-    download_beiwe_data(args)
+    disp_run_info(args)
+    args.func(args)
 
 
 def download_and_check_cli():
@@ -243,5 +248,7 @@ def download_and_check_cli():
     parser = argparse.ArgumentParser(
         "download_and_check", parents=[parent_parser_dl, parent_parser_check]
     )
+    parser.set_defaults(func=download_and_check)
     args = parser.parse_args()
-    download_and_check(args)
+    disp_run_info(args)
+    args.func(args)
