@@ -64,7 +64,7 @@ def download_beiwe_data(args):
     return any(data_folder.iterdir()), data_folder
 
 
-def _quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
+def quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
     data_dir = Path(data_dir)
     out_dir = data_dir.joinpath(f"{subject_id}_processed")
 
@@ -185,18 +185,44 @@ def download_and_check(args):
         return
     else:
         for id in args.beiwe_ids:
-            _quality_check(data_dir, id, args.survey_key_path, args.skip_gps_stats)
+            quality_check(data_dir, id, args.survey_key_path, args.skip_gps_stats)
 
 
-# CLI wrapper
-def quality_check_cli():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", type=str, required=True)
-    parser.add_argument("--subject_id", type=str, required=True)
+######### CLI #########
+# Build parsers with shared argument
+def get_shared_args_qc_and_dl():
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--survey_key_path", type=str, required=True)
     parser.add_argument("--skip_gps_stats", action="store_true")
+    return parser
+
+
+def get_shared_args_dl_funcs():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--keyring_path", type=str, required=True)
+    parser.add_argument("--keyring_pw", type=str, required=True)
+    parser.add_argument("--study_id", type=str, required=True)
+    parser.add_argument("--out_dir", type=str, required=True)
+    parser.add_argument("--beiwe_ids", nargs="+", required=True)
+    parser.add_argument("--beiwe_code_path", type=str, required=True)
+    parser.add_argument("--time_start", type=str, nargs="?", default=None)
+    parser.add_argument("--time_end", type=str, nargs="?", default=None)
+    parser.add_argument(
+        "--data_streams",
+        nargs="*",
+        default=["gps", "survey_timings", "survey_answers", "audio_recordings"],
+    )
+    return parser
+
+
+# CLI wrappers
+def quality_check_cli():
+    parent_parser = get_shared_args_qc_and_dl()
+    parser = argparse.ArgumentParser("quality_check", parents=[parent_parser])
+    parser.add_argument("--data_dir", type=str, required=True)
+    parser.add_argument("--subject_id", type=str, required=True)
     args = parser.parse_args()
-    _quality_check(
+    quality_check(
         args.data_dir,
         args.subject_id,
         args.survey_key_path,
@@ -204,36 +230,18 @@ def quality_check_cli():
     )
 
 
-def download_funcs_cli():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument("--keyring_path", type=str, required=True)
-    parent_parser.add_argument("--keyring_pw", type=str, required=True)
-    parent_parser.add_argument("--study_id", type=str, required=True)
-    parent_parser.add_argument("--out_dir", type=str, required=True)
-    parent_parser.add_argument("--beiwe_ids", nargs="+", required=True)
-    parent_parser.add_argument("--beiwe_code_path", type=str, required=True)
-    parent_parser.add_argument("--time_start", type=str, nargs="?", default=None)
-    parent_parser.add_argument("--time_end", type=str, nargs="?", default=None)
-    parent_parser.add_argument(
-        "--data_streams",
-        nargs="*",
-        default=["gps", "survey_timings", "survey_answers", "audio_recordings"],
-    )
-
-    parser_get_data = subparsers.add_parser(
-        "download_beiwe_data", parents=[parent_parser]
-    )
-    parser_get_data.set_defaults(func=download_beiwe_data)
-
-    parser_dl_check = subparsers.add_parser(
-        "download_and_check", parents=[parent_parser]
-    )
-    parser_dl_check.add_argument("--survey_key_path", type=str, required=True)
-    parser_dl_check.add_argument("--skip_gps_stats", action="store_true")
-    parser_dl_check.set_defaults(func=download_and_check)
-
+def download_data_cli():
+    parent_parser = get_shared_args_dl_funcs()
+    parser = argparse.ArgumentParser("download_beiwe_data", parents=[parent_parser])
     args = parser.parse_args()
-    args.func(args)
+    download_beiwe_data(args)
+
+
+def download_and_check_cli():
+    parent_parser_dl = get_shared_args_dl_funcs()
+    parent_parser_check = get_shared_args_qc_and_dl()
+    parser = argparse.ArgumentParser(
+        "download_and_check", parents=[parent_parser_dl, parent_parser_check]
+    )
+    args = parser.parse_args()
+    download_and_check(args)
