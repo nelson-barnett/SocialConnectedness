@@ -1,0 +1,1 @@
+.. autofunction:: soccon.main.process_survey

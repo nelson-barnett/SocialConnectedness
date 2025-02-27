@@ -1,0 +1,814 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>soccon package &mdash; SocialConnectedness  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SocialConnectedness
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">soccon package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-soccon.acoustic">soccon.acoustic module</a><ul>
+<li><a class="reference internal" href="#soccon.acoustic.get_artic_rate"><code class="docutils literal notranslate"><span class="pre">get_artic_rate()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.acoustic.get_date"><code class="docutils literal notranslate"><span class="pre">get_date()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.acoustic.get_speaking_rate"><code class="docutils literal notranslate"><span class="pre">get_speaking_rate()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.acoustic.get_subject_id"><code class="docutils literal notranslate"><span class="pre">get_subject_id()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.acoustic.process_spa"><code class="docutils literal notranslate"><span class="pre">process_spa()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.constants">soccon.constants module</a></li>
+<li><a class="reference internal" href="#soccon-dev-testing-module">soccon.dev_testing module</a></li>
+<li><a class="reference internal" href="#module-soccon.gps">soccon.gps module</a><ul>
+<li><a class="reference internal" href="#soccon.gps.date_series_to_str"><code class="docutils literal notranslate"><span class="pre">date_series_to_str()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.gps.day_to_obs_day"><code class="docutils literal notranslate"><span class="pre">day_to_obs_day()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.gps.find_max_cont_days"><code class="docutils literal notranslate"><span class="pre">find_max_cont_days()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.gps.find_n_cont_days"><code class="docutils literal notranslate"><span class="pre">find_n_cont_days()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.gps.is_consecutive"><code class="docutils literal notranslate"><span class="pre">is_consecutive()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.main">soccon.main module</a><ul>
+<li><a class="reference internal" href="#soccon.main.agg_acoustic_cli"><code class="docutils literal notranslate"><span class="pre">agg_acoustic_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.agg_gps_cli"><code class="docutils literal notranslate"><span class="pre">agg_gps_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.agg_survey_cli"><code class="docutils literal notranslate"><span class="pre">agg_survey_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.aggregate_acoustic"><code class="docutils literal notranslate"><span class="pre">aggregate_acoustic()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.aggregate_gps"><code class="docutils literal notranslate"><span class="pre">aggregate_gps()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.aggregate_survey"><code class="docutils literal notranslate"><span class="pre">aggregate_survey()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.combine_summaries"><code class="docutils literal notranslate"><span class="pre">combine_summaries()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.combine_summaries_cli"><code class="docutils literal notranslate"><span class="pre">combine_summaries_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.get_parent_parser"><code class="docutils literal notranslate"><span class="pre">get_parent_parser()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.process_gps"><code class="docutils literal notranslate"><span class="pre">process_gps()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.process_gps_cli"><code class="docutils literal notranslate"><span class="pre">process_gps_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.process_survey"><code class="docutils literal notranslate"><span class="pre">process_survey()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.main.process_survey_cli"><code class="docutils literal notranslate"><span class="pre">process_survey_cli()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.make_key">soccon.make_key module</a><ul>
+<li><a class="reference internal" href="#soccon.make_key.build_kr"><code class="docutils literal notranslate"><span class="pre">build_kr()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.make_key.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.quality_check">soccon.quality_check module</a><ul>
+<li><a class="reference internal" href="#soccon.quality_check.download_and_check"><code class="docutils literal notranslate"><span class="pre">download_and_check()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.download_and_check_cli"><code class="docutils literal notranslate"><span class="pre">download_and_check_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.download_beiwe_data"><code class="docutils literal notranslate"><span class="pre">download_beiwe_data()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.download_data_cli"><code class="docutils literal notranslate"><span class="pre">download_data_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.get_shared_args_dl_funcs"><code class="docutils literal notranslate"><span class="pre">get_shared_args_dl_funcs()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.get_shared_args_qc_and_dl"><code class="docutils literal notranslate"><span class="pre">get_shared_args_qc_and_dl()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.quality_check"><code class="docutils literal notranslate"><span class="pre">quality_check()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.quality_check_cli"><code class="docutils literal notranslate"><span class="pre">quality_check_cli()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.quality_check.validate_date"><code class="docutils literal notranslate"><span class="pre">validate_date()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.survey">soccon.survey module</a><ul>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey</span></code></a><ul>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.clean_to_save"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.clean_to_save()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.eval_question"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.eval_question()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.export"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.export()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.load_key"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.load_key()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.mark_to_score"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.mark_to_score()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.parse_and_score"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.parse_and_score()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.preprocess"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.preprocess()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.BeiweSurvey.score"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey.score()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#soccon.survey.RedcapSurvey"><code class="docutils literal notranslate"><span class="pre">RedcapSurvey</span></code></a><ul>
+<li><a class="reference internal" href="#soccon.survey.RedcapSurvey.export"><code class="docutils literal notranslate"><span class="pre">RedcapSurvey.export()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.RedcapSurvey.load_key"><code class="docutils literal notranslate"><span class="pre">RedcapSurvey.load_key()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.RedcapSurvey.process"><code class="docutils literal notranslate"><span class="pre">RedcapSurvey.process()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#soccon.survey.aggregate_beiwe"><code class="docutils literal notranslate"><span class="pre">aggregate_beiwe()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.survey.aggregate_redcap"><code class="docutils literal notranslate"><span class="pre">aggregate_redcap()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.utils">soccon.utils module</a><ul>
+<li><a class="reference internal" href="#soccon.utils.disp_run_info"><code class="docutils literal notranslate"><span class="pre">disp_run_info()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.utils.excel_style"><code class="docutils literal notranslate"><span class="pre">excel_style()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.utils.row_to_dict"><code class="docutils literal notranslate"><span class="pre">row_to_dict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon.viz">soccon.viz module</a><ul>
+<li><a class="reference internal" href="#soccon.viz.alsfrs_hist"><code class="docutils literal notranslate"><span class="pre">alsfrs_hist()</span></code></a></li>
+<li><a class="reference internal" href="#soccon.viz.overview_table"><code class="docutils literal notranslate"><span class="pre">overview_table()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-soccon">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SocialConnectedness</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">soccon package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/soccon.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="soccon-package">
+<h1>soccon package<a class="headerlink" href="#soccon-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-soccon.acoustic">
+<span id="soccon-acoustic-module"></span><h2>soccon.acoustic module<a class="headerlink" href="#module-soccon.acoustic" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.acoustic.get_artic_rate">
+<span class="sig-prename descclassname"><span class="pre">soccon.acoustic.</span></span><span class="sig-name descname"><span class="pre">get_artic_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_syl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">147</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.acoustic.get_artic_rate" title="Link to this definition"></a></dt>
+<dd><p>Returns articulation rate for a given
+SPA output (with lower case column names) and optional syllable count</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – Output of SPA analysis with column names lowered</p></li>
+<li><p><strong>n_syl</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of syllables. Defaults to 147.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Articulation rate (syllables/sec)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.acoustic.get_date">
+<span class="sig-prename descclassname"><span class="pre">soccon.acoustic.</span></span><span class="sig-name descname"><span class="pre">get_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.acoustic.get_date" title="Link to this definition"></a></dt>
+<dd><p>Returns date of a given SPA output (with lower case column names)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>DataFrame</em>) – Output of SPA analysis with column names lowered</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Date</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.acoustic.get_speaking_rate">
+<span class="sig-prename descclassname"><span class="pre">soccon.acoustic.</span></span><span class="sig-name descname"><span class="pre">get_speaking_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_words</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">98</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.acoustic.get_speaking_rate" title="Link to this definition"></a></dt>
+<dd><p>Returns speaking rate for a given
+SPA output (with lower case column names) and optional word count</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – Output of SPA analysis with column names lowered</p></li>
+<li><p><strong>n_words</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of words. Defaults to 98.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Speaking rate (words/min)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.acoustic.get_subject_id">
+<span class="sig-prename descclassname"><span class="pre">soccon.acoustic.</span></span><span class="sig-name descname"><span class="pre">get_subject_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.acoustic.get_subject_id" title="Link to this definition"></a></dt>
+<dd><p>Returns subject id of a given SPA output (with lower case column names)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>DataFrame</em>) – Output of SPA analysis with column names lowered</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Subject ID</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.acoustic.process_spa">
+<span class="sig-prename descclassname"><span class="pre">soccon.acoustic.</span></span><span class="sig-name descname"><span class="pre">process_spa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.acoustic.process_spa" title="Link to this definition"></a></dt>
+<dd><p>Cleans columns of SPA output (keeping any analyst-added columns)
+and adds speaking rate, artic rate, date, and id columns</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fpath</strong> (<em>str</em>) – Path to SPA output CSV file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Processed dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-soccon.constants">
+<span id="soccon-constants-module"></span><h2>soccon.constants module<a class="headerlink" href="#module-soccon.constants" title="Link to this heading"></a></h2>
+</section>
+<section id="soccon-dev-testing-module">
+<h2>soccon.dev_testing module<a class="headerlink" href="#soccon-dev-testing-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-soccon.gps">
+<span id="soccon-gps-module"></span><h2>soccon.gps module<a class="headerlink" href="#module-soccon.gps" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.gps.date_series_to_str">
+<span class="sig-prename descclassname"><span class="pre">soccon.gps.</span></span><span class="sig-name descname"><span class="pre">date_series_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.gps.date_series_to_str" title="Link to this definition"></a></dt>
+<dd><p>Formats series containing day, month, and year to “/” separated string.
+Intended to be used with outputs from <cite>find_n_cont_days</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>date</strong> (<em>Series</em>) – Series containing month, day, year.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Data in <cite>date</cite> formatted as <cite>month/day/year</cite></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.gps.day_to_obs_day">
+<span class="sig-prename descclassname"><span class="pre">soccon.gps.</span></span><span class="sig-name descname"><span class="pre">day_to_obs_day</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.gps.day_to_obs_day" title="Link to this definition"></a></dt>
+<dd><p>Returns the observation day of a given Series that has values of “year”, “month”, and “day”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – csv output of gps_stats_main read in by Pandas</p></li>
+<li><p><strong>day</strong> (<em>Series</em>) – “year”, “month”, and “day” values to find</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – day not found in df</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Observation day (0-indexed)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.gps.find_max_cont_days">
+<span class="sig-prename descclassname"><span class="pre">soccon.gps.</span></span><span class="sig-name descname"><span class="pre">find_max_cont_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.gps.find_max_cont_days" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.gps.find_n_cont_days">
+<span class="sig-prename descclassname"><span class="pre">soccon.gps.</span></span><span class="sig-name descname"><span class="pre">find_n_cont_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.gps.find_n_cont_days" title="Link to this definition"></a></dt>
+<dd><p>Determines if <cite>n</cite> consecutive days exist in <cite>df</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – Output CSV of <cite>process_gps</cite> loaded in as a pandas DataFrame.</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of days to check for consecutivity. Defaults to 30.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if <cite>n</cite> consecutive days were found, False otherwise
+Series: Start day (day, month, year). If no consecutive set of days found, last tested start day.
+Series: End day (day, month, year). If no consecutive set of days found, last tested end day.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.gps.is_consecutive">
+<span class="sig-prename descclassname"><span class="pre">soccon.gps.</span></span><span class="sig-name descname"><span class="pre">is_consecutive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">days</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">months</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.gps.is_consecutive" title="Link to this definition"></a></dt>
+<dd><p>Determines if passed data constitute a continuous set of days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>days</strong> (<em>Series</em>) – Day values</p></li>
+<li><p><strong>months</strong> (<em>Series</em>) – Month values</p></li>
+<li><p><strong>years</strong> (<em>Series</em>) – Year values</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>True if data is consecutive, otherwise False
+int: Last “valid” index. If whole range is continuous, this is equal to length of values,</p>
+<blockquote>
+<div><p>if discontinuity found, this is equal to the ind on which the loop broke</p>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-soccon.main">
+<span id="soccon-main-module"></span><h2>soccon.main module<a class="headerlink" href="#module-soccon.main" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.agg_acoustic_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">agg_acoustic_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.agg_acoustic_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.agg_gps_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">agg_gps_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.agg_gps_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.agg_survey_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">agg_survey_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.agg_survey_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.aggregate_acoustic">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">aggregate_acoustic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.aggregate_acoustic" title="Link to this definition"></a></dt>
+<dd><p>Collects acoustic data in <cite>data_dir</cite>
+(processed externally in SPA) into a summary sheet in <cite>out_dir</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – Path to directory in which data is stored.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which summary will be saved</p></li>
+<li><p><strong>out_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the summary file. Defaults to “ACOUSTIC_SUMMARY”.</p></li>
+<li><p><strong>subject_id</strong> (<em>str</em><em>, </em><em>optional</em>) – Subject whose data should be analyzed. Defaults to “”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.aggregate_gps">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">aggregate_gps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.aggregate_gps" title="Link to this definition"></a></dt>
+<dd><p>Collects data from <cite>process_gps</cite> in <cite>data_dir</cite> into a summary sheet in <cite>out_dir</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – Path to directory in which data exists</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which summary will be saved</p></li>
+<li><p><strong>out_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the summary file. Defaults to “GPS_SUMMARY”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.aggregate_survey">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">aggregate_survey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.aggregate_survey" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.combine_summaries">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">combine_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acoustic_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survey_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.combine_summaries" title="Link to this definition"></a></dt>
+<dd><p>Combines summary sheets into single sheet</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory into which document will be saved</p></li>
+<li><p><strong>acoustic_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to acoustic summary file. Defaults to “”.</p></li>
+<li><p><strong>gps_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to gps summary file. Defaults to “”.</p></li>
+<li><p><strong>survey_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to survey summary file. Defaults to “”.</p></li>
+<li><p><strong>out_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of output file. Defaults to “COMBINED_SUMMARY”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.combine_summaries_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">combine_summaries_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.combine_summaries_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.get_parent_parser">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">get_parent_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.get_parent_parser" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.process_gps">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">process_gps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_thresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.process_gps" title="Link to this definition"></a></dt>
+<dd><p>Runs Forest.Jasmine’s GPS analysis with some user interaction and
+additional helpful info printed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – _description_</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – _description_</p></li>
+<li><p><strong>subject_ids</strong> (<em>Union</em><em>[</em><em>list</em><em>, </em><em>None</em><em>]</em><em>, </em><em>optional</em>) – List of subject ids to use. If None, all ids in <cite>data_dir</cite> are used. Defaults to None.</p></li>
+<li><p><strong>quality_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – Data quality threshold. Defaults to 0.05.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.process_gps_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">process_gps_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.process_gps_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.process_survey">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">process_survey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survey_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_dirs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_zips</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_redcap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_beiwe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.process_survey" title="Link to this definition"></a></dt>
+<dd><p>Create a cleaned and scored copy of all survey CSVs in <cite>data_dir</cite>
+saved in <cite>out_dir</cite> by survey ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – Path to root directory where data is stored</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory in which data will be saved</p></li>
+<li><p><strong>key_path</strong> (<em>str</em>) – Path to CSV key containing survey scoring rules</p></li>
+<li><p><strong>subject_ids</strong> (<em>list</em><em>, </em><em>optional</em>) – List of subject IDs to process. Defaults to None.</p></li>
+<li><p><strong>survey_ids</strong> (<em>list</em><em>, </em><em>optional</em>) – List of survey IDs to process. Defaults to None.</p></li>
+<li><p><strong>skip_dirs</strong> (<em>list</em><em>, </em><em>optional</em>) – List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to None.</p></li>
+<li><p><strong>use_zips</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to process CSVs in zip files within <cite>data_dir</cite>. Defaults to False.</p></li>
+<li><p><strong>only_redcap</strong> (<em>bool</em><em>, </em><em>optional</em>) – Only process redcap data. Mutually exclusive with “only_beiwe”. Defaults to False.</p></li>
+<li><p><strong>only_beiwe</strong> (<em>bool</em><em>, </em><em>optional</em>) – Only process beiwe data. Mutually exclusive with “only_redcap”. Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.main.process_survey_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.main.</span></span><span class="sig-name descname"><span class="pre">process_survey_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.main.process_survey_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-soccon.make_key">
+<span id="soccon-make-key-module"></span><h2>soccon.make_key module<a class="headerlink" href="#module-soccon.make_key" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.make_key.build_kr">
+<span class="sig-prename descclassname"><span class="pre">soccon.make_key.</span></span><span class="sig-name descname"><span class="pre">build_kr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beiwe_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beiwe_pw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secret_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beiwe_code_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_pw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encrypt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.make_key.build_kr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.make_key.main">
+<span class="sig-prename descclassname"><span class="pre">soccon.make_key.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.make_key.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-soccon.quality_check">
+<span id="soccon-quality-check-module"></span><h2>soccon.quality_check module<a class="headerlink" href="#module-soccon.quality_check" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.download_and_check">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">download_and_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.download_and_check" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.download_and_check_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">download_and_check_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.download_and_check_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.download_beiwe_data">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">download_beiwe_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.download_beiwe_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.download_data_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">download_data_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.download_data_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.get_shared_args_dl_funcs">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">get_shared_args_dl_funcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.get_shared_args_dl_funcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.get_shared_args_qc_and_dl">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">get_shared_args_qc_and_dl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.get_shared_args_qc_and_dl" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.quality_check">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">quality_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survey_key_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_gps_stats</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.quality_check" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.quality_check_cli">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">quality_check_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.quality_check_cli" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.quality_check.validate_date">
+<span class="sig-prename descclassname"><span class="pre">soccon.quality_check.</span></span><span class="sig-name descname"><span class="pre">validate_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.quality_check.validate_date" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-soccon.survey">
+<span id="soccon-survey-module"></span><h2>soccon.survey module<a class="headerlink" href="#module-soccon.survey" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">BeiweSurvey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-201</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_ans</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-301</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Object that contains all relevant information for a given survey</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.clean_to_save">
+<span class="sig-name descname"><span class="pre">clean_to_save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.clean_to_save" title="Link to this definition"></a></dt>
+<dd><p>Drops ‘score_flag’ column and ‘info_text_box’ rows, resets index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.eval_question">
+<span class="sig-name descname"><span class="pre">eval_question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.eval_question" title="Link to this definition"></a></dt>
+<dd><p>Splits answer options and returns answer score</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opts</strong> (<em>str</em>) – String of answer options split by semicolons</p></li>
+<li><p><strong>ans</strong> (<em>str</em>) – Answer for this question</p></li>
+<li><p><strong>q_num</strong> (<em>int</em>) – This question’s number</p></li>
+<li><p><strong>score_flag</strong> (<em>bool</em>) – True if this question should be score, Flase if not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scored answer</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.export" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Saves <cite>self.df</cite> to specified location.</dt><dd><p>Appends “_OUT” always. Appends “_OUT_SKIPPED_ANS” and “_OUT_PARSE_ERR”
+if self.skipped_ans or self.parse_err are in self.df.score.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which <cite>self.df</cite> should be saved.</p></li>
+<li><p><strong>out_prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix to prepend to filename. Defaults to “”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.load_key">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.load_key" title="Link to this definition"></a></dt>
+<dd><p>Loads and processes survey key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fpath</strong> (<em>str</em>) – Path to survey key CSV or XLSX.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Key formatted such that columns are survey ids</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.mark_to_score">
+<span class="sig-name descname"><span class="pre">mark_to_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.mark_to_score" title="Link to this definition"></a></dt>
+<dd><p>Adds a “score_flag” column to self.df
+containing boolean values indicating whether this question should be scored or not.
+Marks as false: “not presented, only answer if + no answer selected, yes/no question rows,
+info_text_box, free_response, and slider rows.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.parse_and_score">
+<span class="sig-name descname"><span class="pre">parse_and_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.parse_and_score" title="Link to this definition"></a></dt>
+<dd><p>Parses a given survey and stores a cleaned and scored csv file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.preprocess">
+<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.preprocess" title="Link to this definition"></a></dt>
+<dd><p>Cleans the survey dataframe by removing brackets
+and replacing “ ;” and “ ; “ with “;” in question answer options.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ans_opts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.score" title="Link to this definition"></a></dt>
+<dd><p>Survey scoring algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ans_opts</strong> (<em>list</em>) – List of answer options (strings)</p></li>
+<li><p><strong>answer</strong> (<em>string</em>) – The answer to score</p></li>
+<li><p><strong>q_num</strong> (<em>int</em>) – Index of this question</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scored value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">RedcapSurvey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.export" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Saves <cite>self.df</cite> to specified location.</dt><dd><p>Appends “_OUT” always.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which <cite>self.df</cite> should be saved.</p></li>
+<li><p><strong>out_prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix to prepend to filename. Defaults to “”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.load_key">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.load_key" title="Link to this definition"></a></dt>
+<dd><p>Loads and processes survey key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fpath</strong> (<em>str</em>) – Path to survey key CSV or XLSX.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Key parsed for use in survey processing</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.process" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.survey.aggregate_beiwe">
+<span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">aggregate_beiwe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.aggregate_beiwe" title="Link to this definition"></a></dt>
+<dd><p>Take all processed data and create a summary Excel doc saved to <cite>out_dir</cite>.
+First tab is a data summary, second tab is a basic statistics summary,
+remaining tabs contain detailed scoring for each individual survey</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – Path to directory in which <cite>processed</cite> data exists.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to which summary sheet should be saved.</p></li>
+<li><p><strong>key_path</strong> (<em>str</em>) – Path to CSV key containing survey scoring rules</p></li>
+<li><p><strong>out_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of output file. Defaults to “SURVEY_SUMMARY”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.survey.aggregate_redcap">
+<span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">aggregate_redcap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.aggregate_redcap" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-soccon.utils">
+<span id="soccon-utils-module"></span><h2>soccon.utils module<a class="headerlink" href="#module-soccon.utils" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.utils.disp_run_info">
+<span class="sig-prename descclassname"><span class="pre">soccon.utils.</span></span><span class="sig-name descname"><span class="pre">disp_run_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.utils.disp_run_info" title="Link to this definition"></a></dt>
+<dd><p>Prints info about the function call to the command line</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em>) – Contains arguments gathered from the command line</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.utils.excel_style">
+<span class="sig-prename descclassname"><span class="pre">soccon.utils.</span></span><span class="sig-name descname"><span class="pre">excel_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.utils.excel_style" title="Link to this definition"></a></dt>
+<dd><p>Convert given row and column number to an Excel-style cell name.
+Source: <a class="reference external" href="https://stackoverflow.com/questions/19153462/get-excel-style-column-names-from-column-number">https://stackoverflow.com/questions/19153462/get-excel-style-column-names-from-column-number</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.utils.row_to_dict">
+<span class="sig-prename descclassname"><span class="pre">soccon.utils.</span></span><span class="sig-name descname"><span class="pre">row_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_sep_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kv_sep_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_vals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_sep_char</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_to_vals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.utils.row_to_dict" title="Link to this definition"></a></dt>
+<dd><p>Returns a dictionary made from <cite>row</cite>. Assumes row is of the form “key1:val1,val2,val3;key2:val1,val2,val3…”</p>
+</dd></dl>
+
+</section>
+<section id="module-soccon.viz">
+<span id="soccon-viz-module"></span><h2>soccon.viz module<a class="headerlink" href="#module-soccon.viz" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.viz.alsfrs_hist">
+<span class="sig-prename descclassname"><span class="pre">soccon.viz.</span></span><span class="sig-name descname"><span class="pre">alsfrs_hist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">summary_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ALSFRS-R'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.viz.alsfrs_hist" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.viz.overview_table">
+<span class="sig-prename descclassname"><span class="pre">soccon.viz.</span></span><span class="sig-name descname"><span class="pre">overview_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">summary_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'timepoint_summary'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.viz.overview_table" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-soccon">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-soccon" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Nelson Barnett.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
