@@ -1,0 +1,93 @@
+soccon package
+==============
+
+Submodules
+----------
+
+soccon.acoustic module
+----------------------
+
+.. automodule:: soccon.acoustic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.constants module
+-----------------------
+
+.. automodule:: soccon.constants
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.dev\_testing module
+--------------------------
+
+.. automodule:: soccon.dev_testing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.gps module
+-----------------
+
+.. automodule:: soccon.gps
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.main module
+------------------
+
+.. automodule:: soccon.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.make\_key module
+-----------------------
+
+.. automodule:: soccon.make_key
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.quality\_check module
+----------------------------
+
+.. automodule:: soccon.quality_check
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.survey module
+--------------------
+
+.. automodule:: soccon.survey
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.utils module
+-------------------
+
+.. automodule:: soccon.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+soccon.viz module
+-----------------
+
+.. automodule:: soccon.viz
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: soccon
+   :members:
+   :show-inheritance:
+   :undoc-members:
