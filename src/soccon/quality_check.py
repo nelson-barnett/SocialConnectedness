@@ -21,6 +21,15 @@ def validate_date(d):
 
 
 def download_beiwe_data(args):
+    """Downloads data from Beiwe server into specified directory
+
+    Args:
+        args (argparse.Namespace): Args. See download_data_cli for details.
+
+    Returns:
+        bool: True if data has been downloaded, false if not
+        Path: Path to folder into which data has been downloaded
+    """
     # Validate dates
     if args.time_start is not None:
         validate_date(args.time_start)
@@ -66,6 +75,15 @@ def download_beiwe_data(args):
 
 
 def quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
+    """Runs a quality check on the data in `data_dir` on `subject_id`
+    and outputs the results to `data_dir/subject_id_processed/`
+
+    Args:
+        data_dir (str): Path to data directory
+        subject_id (str): Beiwe subject ID
+        survey_key_path (str): Path to survey key which is used to apply use names to survey ids
+        skip_gps_stats (bool): Flag to skip processing GPS data
+    """
     data_dir = Path(data_dir)
     out_dir = data_dir.joinpath(f"{subject_id}_processed")
 
@@ -179,6 +197,7 @@ def quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
 
 
 def download_and_check(args):
+    """Runs download_beiwe_data and quality_check for all subject ids provided"""
     dl_success, data_dir = download_beiwe_data(args)
 
     if not dl_success:
