@@ -1,0 +1,296 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surveys &mdash; SocialConnectedness  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Acoustic" href="soccon.acoustic.html" />
+    <link rel="prev" title="Main" href="soccon.main.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SocialConnectedness
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html#acoustic">Acoustic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html#gps">GPS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html#other">Other</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html#quality-check">Quality Check</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="soccon.main.html">Main</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Surveys</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#soccon.survey.BeiweSurvey"><code class="docutils literal notranslate"><span class="pre">BeiweSurvey</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#soccon.survey.RedcapSurvey"><code class="docutils literal notranslate"><span class="pre">RedcapSurvey</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#soccon.survey.aggregate_beiwe"><code class="docutils literal notranslate"><span class="pre">aggregate_beiwe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#soccon.survey.aggregate_redcap"><code class="docutils literal notranslate"><span class="pre">aggregate_redcap()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.acoustic.html">Acoustic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.gps.html">GPS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.utils.html">Utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SocialConnectedness</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Surveys</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/soccon.survey.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-soccon.survey">
+<span id="surveys"></span><h1>Surveys<a class="headerlink" href="#module-soccon.survey" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">BeiweSurvey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-201</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_ans</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-301</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Object that contains all relevant information for a given survey</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.clean_to_save">
+<span class="sig-name descname"><span class="pre">clean_to_save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.clean_to_save" title="Link to this definition"></a></dt>
+<dd><p>Drops ‘score_flag’ column and ‘info_text_box’ rows, resets index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.eval_question">
+<span class="sig-name descname"><span class="pre">eval_question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.eval_question" title="Link to this definition"></a></dt>
+<dd><p>Splits answer options and returns answer score</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opts</strong> (<em>str</em>) – String of answer options split by semicolons</p></li>
+<li><p><strong>ans</strong> (<em>str</em>) – Answer for this question</p></li>
+<li><p><strong>q_num</strong> (<em>int</em>) – This question’s number</p></li>
+<li><p><strong>score_flag</strong> (<em>bool</em>) – True if this question should be score, Flase if not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>int</strong> – Scored answer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.export" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Saves <cite>self.df</cite> to specified location.</dt><dd><p>Appends “_OUT” always. Appends “_OUT_SKIPPED_ANS” and “_OUT_PARSE_ERR”
+if self.skipped_ans or self.parse_err are in self.df.score.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which <cite>self.df</cite> should be saved.</p></li>
+<li><p><strong>out_prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix to prepend to filename. Defaults to “”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.load_key">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.load_key" title="Link to this definition"></a></dt>
+<dd><p>Loads and processes survey key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fpath</strong> (<em>str</em>) – Path to survey key CSV or XLSX.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>DataFrame</strong> – Key formatted such that columns are survey ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.mark_to_score">
+<span class="sig-name descname"><span class="pre">mark_to_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.mark_to_score" title="Link to this definition"></a></dt>
+<dd><p>Adds a “score_flag” column to self.df
+containing boolean values indicating whether this question should be scored or not.
+Marks as false: “not presented, only answer if + no answer selected, yes/no question rows,
+info_text_box, free_response, and slider rows.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.parse_and_score">
+<span class="sig-name descname"><span class="pre">parse_and_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.parse_and_score" title="Link to this definition"></a></dt>
+<dd><p>Parses a given survey and stores a cleaned and scored csv file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.preprocess">
+<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.preprocess" title="Link to this definition"></a></dt>
+<dd><p>Cleans the survey dataframe by removing brackets
+and replacing “ ;” and “ ; “ with “;” in question answer options.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.BeiweSurvey.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ans_opts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.BeiweSurvey.score" title="Link to this definition"></a></dt>
+<dd><p>Survey scoring algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ans_opts</strong> (<em>list</em>) – List of answer options (strings)</p></li>
+<li><p><strong>answer</strong> (<em>string</em>) – The answer to score</p></li>
+<li><p><strong>q_num</strong> (<em>int</em>) – Index of this question</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>int</strong> – Scored value</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">RedcapSurvey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.export" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Saves <cite>self.df</cite> to specified location.</dt><dd><p>Appends “_OUT” always.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to directory into which <cite>self.df</cite> should be saved.</p></li>
+<li><p><strong>out_prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix to prepend to filename. Defaults to “”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.load_key">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.load_key" title="Link to this definition"></a></dt>
+<dd><p>Loads and processes survey key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fpath</strong> (<em>str</em>) – Path to survey key CSV or XLSX.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>DataFrame</strong> – Key parsed for use in survey processing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="soccon.survey.RedcapSurvey.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.RedcapSurvey.process" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.survey.aggregate_beiwe">
+<span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">aggregate_beiwe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.aggregate_beiwe" title="Link to this definition"></a></dt>
+<dd><p>Take all processed data and create a summary Excel doc saved to <cite>out_dir</cite>.
+First tab is a data summary, second tab is a basic statistics summary,
+remaining tabs contain detailed scoring for each individual survey</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> (<em>str</em>) – Path to directory in which <cite>processed</cite> data exists.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to which summary sheet should be saved.</p></li>
+<li><p><strong>key_path</strong> (<em>str</em>) – Path to CSV key containing survey scoring rules</p></li>
+<li><p><strong>out_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of output file. Defaults to “SURVEY_SUMMARY”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="soccon.survey.aggregate_redcap">
+<span class="sig-prename descclassname"><span class="pre">soccon.survey.</span></span><span class="sig-name descname"><span class="pre">aggregate_redcap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#soccon.survey.aggregate_redcap" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="soccon.main.html" class="btn btn-neutral float-left" title="Main" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="soccon.acoustic.html" class="btn btn-neutral float-right" title="Acoustic" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Nelson Barnett.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

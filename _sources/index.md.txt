@@ -1,0 +1,23 @@
+SocialConnectedness documentation
+=================================
+
+This is a library which provides command line scripts for processing data collected by the [Beiwe smartphone app](https://beiwe.hsph.harvard.edu/).
+The main features can be seen in the [Command Line Interface](#cli) section. 
+
+```{toctree}
+   :caption: Command Line Interface
+   :hidden:
+
+   cli
+```
+
+```{toctree}
+   :caption: API
+   :hidden:
+
+   soccon.main
+   soccon.survey
+   soccon.acoustic
+   soccon.gps
+   soccon.utils
+```
