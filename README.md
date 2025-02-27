@@ -1,18 +1,21 @@
 # Social Connectedness Project using Beiwe 
 
 ## Intro
-This repository contains code used to process, aggregate, and analyze data collected from surveys and passive GPS data using the Beiwe app.
+This repository contains code used to analyze, aggregate, and visualize data collected from surveys and passive GPS data using the [Beiwe](https://beiwe.hsph.harvard.edu/) app.
+
+This code is specifically built for the Social Connectedness in ALS project taking place at MGH-IHP, but is intended to be useful for many projects collecting data with Beiwe.
 
 ## Setup
+Below is a detailed guide to running the scripts provided by this codebase. 
+To jump directly to the analysis scripts, go to [Running Code](#running-code)
+
 ### Install Python
 Install Python: https://www.python.org/downloads/
 
 **NOTE:**
 
-If you plan to run GPS analysis, make sure you are using Python 3.11, 
-as this is what is supported by the source GPS processing code at https://github.com/onnela-lab/forest.
-If you are only running survey processing, Python 3.13 works.
-
+This project requires a Python version <= 3.11, as the data processing API provided by the Beiwe developers, [forest](https://github.com/onnela-lab/forest), is restricted to this version.
+ 
 ### Set up a virtual environment
 Create a virtual environment. For detailed instructions, see [here](https://docs.python.org/3/library/venv.html).
 
@@ -24,8 +27,7 @@ python -m venv .venv
 
 to create a folder name ".venv" in the current directory.
 
-Then, activate it by running the command below that corresponds to your shell:
-(copied from python docs linked above)
+Then, activate it by running the command below that corresponds to your shell (copied from python docs linked above):
 
 | Shell | Command |
 |:----- |:------- |  
@@ -38,10 +40,12 @@ Then, activate it by running the command below that corresponds to your shell:
 
 **NOTE**
 
-Take note of the python version running in your virtual environment. Make sure it is 3.11 if you plan to process GPS data.
+Take note of the python version running in your virtual environment. Make sure it is 3.11. 
+If multiple python versions exist on the machine, it is easy to accidentally invoke the wrong one. 
 
 ### Install
-You can install directly from GitHub or from a local version of this code by first cloning this repository. 
+You can install directly from GitHub or from a local version of this code by first 
+[cloning](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. 
 With the virtual environment active, run your preferred version:
 
 After cloning:
@@ -55,16 +59,21 @@ python -m pip install git+https://github.com/nelson-barnett/SocialConnectedness
 ```
 
 ## Running Code
-All analysis functions can be accessed by invoking `soccon_analysis` followed by the function call, as shown below.
+All analysis scripts are invoked via the command line.
 
-Almost all functions are split into "processing" and "aggregating" categories.
-Processing functions take raw data and synthesize it into a meaningful form for human analysis.
-Aggregating functions take processed data and combine it into an easily readable format.
+The main analysis scripts are almost all split into "processing" and "aggregating" categories.
+Processing scripts take raw data and synthesize it into a meaningful form for human analysis.
+Aggregating scripts take processed data and combine it into an easily readable format.
 
-For ease of use, copy the file `run_analysis.ps1` from this repository to your current working directory.
+In addition to these, there are several "quality checking" scripts that are used for directly downloading data 
+for a subject or given subject or set of subjects from the Beiwe servers 
+during the study's data collection period and assessing its volume and quality.    
+
+Two files are provided (`run_analysis.ps1` for Windows and `run_analysis` for Mac) for ease of use.  
+Copy the file for your operating system from this repository to your current working directory.
 Edit the paths and variables at the top of the file to your satisfication then uncomment the line(s) with the function(s) you wish to run.
 
-Run analysis by envoking this file:
+Run analysis by envoking the file:
 
 Windows PowerShell:
 ```console
@@ -77,85 +86,156 @@ bash run_analysis
 ```
 
 ### Brief docs
-Below is a description of the tools associated with each type of data for this project. 
+Below is a description of the tools associated with each type of data for this project.
+Refer to the `run_analysis` files to see specific examples.
 
 ### Survey
 _`process_survey`_:
-- data_dir: Path to root directory where data is stored
-- out_dir: Path to directory in which data will be saved
-- key_path: Path to CSV/Excel key containing survey scoring rules
-- subject_ids (optional): List of subject IDs to process. Defaults to [].
-- survey_ids (optional): List of survey IDs to process. Defaults to [].
-- skip_dirs (optional): List of directories names to skip when looking for data. Only use the dir name, not the full path. Defaults to [].
-- use_zips (optional): Flag to process CSVs in zip files within `data_dir`. Defaults to False.
-- only_redcap (optional): Only process redcap data. Mutually exclusive with "only_beiwe". Defaults to False.
-- only_beiwe (optional): Only process beiwe data. Mutually exclusive with "only_redcap". Defaults to False.
-
-_Example function call using all arguments_
-
-```
-soccon_analysis process_survey --data_dir "L:/SocialConnectednessProject/Data/Survey Data" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --subject_ids "subject1" "subject2" --survey_id "qqqqqqq123" "zyxwvut54321" --skip_dirs "OldBadData" "NewWorseData" --use_zips --only_redcap
-```
+- -d, --data_dir  
+Path to root directory where data is stored
+- -o, --out_dir  
+Path to directory into which data will be saved
+- -k, --key_path  
+Path to Excel file containing survey scoring rules
+- --subject_ids (optional):  
+List of subject IDs to process. If nothing is provided, all subjects in `data_dir` will be used
+- --survey_ids (optional):  
+List of survey IDs to process. If nothing is provided, all surveys in `data_dir` will be used
+- --skip_dirs (optional):  
+List of directory names to skip when looking for data. Only use the dir name, not the full path
+- --use_zips (optional):  
+Flag to process CSVs in zip files within `data_dir`. Defaults to False
+- --only_redcap (optional):  
+Flag to only process redcap data. Mutually exclusive with `only_beiwe`. Defaults to False
+- --only_beiwe (optional):  
+Flag to only process beiwe data. Mutually exclusive with `only_redcap`. Defaults to False
 
 _`aggregate_survey`_:
-- data_dir: Path to directory in which `processed` data exists.
-- out_dir: Directory to which summary sheet should be saved.
-- key_path: Path to CSV key containing survey scoring rules
-- out_name (optional): Name of output file. Defaults to "SURVEY_SUMMARY".
-
-_Example function call using all arguments_
-
-```console
-soccon_analysis aggregate_survey --data_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --key_path "C:/Users/MyUser/Desktop/SurveyKey.csv" --out_name 'Best_Survey_Summary_Ever"
-```
+- -d, --data_dir  
+Path to root directory where data is stored
+- -o, --out_dir  
+Path to directory into which data will be saved
+- -k, --key_path  
+Path to Excel file containing survey scoring rules
+- --out_name (optional):  
+Name of output file. Defaults to `"SURVEY_SUMMARY"`
 
 ### Acoustic
 _`aggregate_acoustic`_:
-- data_dir: Path to directory in which data is stored.
-- out_dir: Path to directory into which summary will be saved
-- out_name (optional): Name of the summary file. Defaults to "ACOUSTIC_SUMMARY".
-- subject_id (optional): Subject whose data should be analyzed. Defaults to "".
-
-_Example function call using all arguments_
-
-```console
-soccon_analysis aggregate_acoustic --data_dir "L:/SocialConnectednessProject/Data/AcousticData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "New_Acoustic_Summary1234" --subject_id "best_subject"
-```
+- -d, --data_dir  
+Path to root directory where data is stored
+- -o, --out_dir  
+Path to directory into which data will be saved
+- --subject_ids (optional):  
+Subjects whose data should be analyzed. If nothing is provided, all subjects in `data_dir` will be used
+- --out_name (optional):  
+Name of the summary file. Defaults to `"ACOUSTIC_SUMMARY"`
 
 ### GPS
 _`process_gps`_:
-- data_dir: Path to directory in which data is stored.
-- out_dir: Path to directory into which summary will be saved
-- subject_ids (optional): List of subject ids to use. If None, all ids in `data_dir` are used. Defaults to None.
-- quality_thresh (optional): Data quality threshold. Defaults to 0.05.
-
-_Example function call using all arguments_
-
-```console
-soccon_analysis process_gps --data_dir "L:/SocialConnectednessProject/Data/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPS" --subject_ids "subj1" "subj2" --quality_thresh 0.1
-```
+- -d, --data_dir  
+Path to root directory where data is stored
+- -o, --out_dir  
+Path to directory into which data will be saved
+- --subject_ids (optional):  
+Subjects whose data should be analyzed. If nothing is provided, all subjects in `data_dir` will be used
+- --quality_thresh (optional):  
+Data quality threshold. Defaults to `0.05`
 
 _`aggregate_gps`_:
-- data_dir: Path to directory in which processed data exists
-- out_dir: Path to directory into which summary will be saved
-- out_name (optional): Name of the summary file. Defaults to "GPS_SUMMARY".
-
-_Example function call using all arguments_
-
-```
-soccon_analysis aggregate_gps --data_dir "L:/SocialConnectednessProject/Data/ProcessedData/GPSData" --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --out_name "CoolGPSSUMMARY"
-```
+- -d, --data_dir  
+Path to root directory where data is stored
+- -o, --out_dir  
+Path to directory into which data will be saved
+- --out_name (optional):  
+Name of the summary file. Defaults to `"GPS_SUMMARY"`
 
 ### Other
 _`combine_summaries`_:
-- out_dir: Directory into which document will be saved
-- acoustic_path (optional): Path to acoustic summary file. Defaults to "".
-- gps_path (optional): Path to gps summary file. Defaults to "".
-- survey_path (optional): Path to survey summary file. Defaults to "".
-- out_name (optional): Name of output file. Defaults to "COMBINED_SUMMARY".
+- -o, --out_dir  
+Path to directory into which data will be saved
+- --acoustic_path (optional):  
+Path to acoustic summary file. Defaults to ""
+- --gps_path (optional):  
+Path to gps summary file. Defaults to ""
+- --survey_path (optional):  
+Path to survey summary file. Defaults to ""
+- --out_name (optional):  
+Name of output file. Defaults to `"COMBINED_SUMMARY"`
 
-_Example function call using all arguments_
+### Quality Check
+_`make_key`_:
+- --username  
+Beiwe username
+- --beiwe_pw  
+Beiwe password
+- --access_key  
+Public access key obtained from Beiwe server
+- --secret_key  
+Secret access key obtained from Beiwe server
+- --out_path  
+Path to directory into which key will be saved
+- --beiwe_code_path  
+Path to [this](https://github.com/onnela-lab/beiwe) cloned repository
+- --file_pw,  
+Password with which to encrypt the file
 
-```
-soccon_analysis combine_summaries --out_dir "L:/SocialConnectednessProject/Data/ProcessedData" --acoustic_path "L:/SocialConnectednessProject/Data/ProcessedData/GPSData/New_Acoustic_Summary1234.xlsx" --gps_path "L:/SocialConnectednessProject/Data/ProcessedData/CoolGPSSUMMARY.csv" --survey_path "L:/SocialConnectednessProject/Data/ProcessedData/ProcessedData/Best_Survey_Summary_Ever.xlsx" --out_name "SUMMARY"
-```
+_`download_and_check`_:
+- --keyring_path  
+Path to keyring file generated by `make_key`
+- --keyring_pw  
+Password for the keyring file
+- --study_id  
+Beiwe study ID
+- --out_dir  
+Path to directory into which data will be saved
+- --beiwe_ids  
+Beiwe subject IDs' data to download 
+- --beiwe_code_path  
+Path to [this](https://github.com/onnela-lab/beiwe) cloned repository
+- --time_start  
+Earliest date at which to download data. Formatted YYYY-MM-DD. 
+If not supplied, earliest collected data will be used for all subjects
+- --time_end"  
+Latest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, current date will be used for all subjects
+- --data_streams  
+Data streams to download.
+Defaults to ["gps", "survey_timings", "survey_answers", "audio_recordings"]
+- --survey_key_path  
+Path to Excel file containing survey scoring rules
+- --skip_gps_stats  
+Flag to skip running GPS processing, as this can sometimes be time-intensive
+
+_`download_beiwe_data`_:
+- --keyring_path  
+Path to keyring file generated by `make_key`
+- --keyring_pw  
+Password for the keyring file
+- --study_id  
+Beiwe study ID
+- --out_dir  
+Path to directory into which data will be saved
+- --beiwe_ids  
+Beiwe subject IDs' data to download 
+- --beiwe_code_path  
+Path to [this](https://github.com/onnela-lab/beiwe) cloned repository
+- --time_start  
+Earliest date at which to download data. Formatted YYYY-MM-DD. 
+If not supplied, earliest collected data will be used for all subjects
+- --time_end"  
+Latest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, current date will be used for all subjects
+- --data_streams  
+Data streams to download.
+Defaults to ["gps", "survey_timings", "survey_answers", "audio_recordings"]
+
+_`run_quality_check`_:
+- --data_dir  
+Path to root directory where data is stored
+- --subject_id  
+Beiwe ID of subject's data to check
+- --survey_key_path  
+Path to Excel file containing survey scoring rules
+- --skip_gps_stats  
+Flag to skip running GPS processing, as this can sometimes be time-intensive
