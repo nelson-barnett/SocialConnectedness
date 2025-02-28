@@ -300,13 +300,8 @@ class BeiweSurvey(object):
         self.df["score_flag"] = score_flag
 
     def clean_to_save(self):
-        """Drops 'score_flag' column and 'info_text_box' rows, resets index."""
+        """Drops 'score_flag' column, resets index."""
         self.df.drop("score_flag", axis=1, errors="ignore", inplace=True)
-        self.df.drop(
-            self.df.loc[self.df["question type"] == "info_text_box"].index,
-            axis=0,
-            inplace=True,
-        )
         self.df.reset_index(drop=True, inplace=True)
 
     def parse_and_score(self):
@@ -569,7 +564,7 @@ def aggregate_beiwe(data_dir, key_path):
         out_name (str, optional): Name of output file. Defaults to "SURVEY_SUMMARY".
     """
     data_dir = Path(data_dir)
-    survey_key = BeiweSurvey.load_key(key_path, sheet_name="Beiwe")
+    survey_key = BeiweSurvey.load_key(key_path)
 
     # Aggregate
     aggs_dict = {}  # Dictionary of dataframes
@@ -598,6 +593,15 @@ def aggregate_beiwe(data_dir, key_path):
 
             # Load file
             this_df = pd.read_csv(fpath)
+            
+            # Drop "info_text_box" rows without resetting index 
+            # so that subscores still work and output is clean
+            this_df.drop(
+                this_df.loc[this_df["question type"] == "info_text_box"].index,
+                axis=0,
+                inplace=True,
+            )
+            
             is_nonnumeric = "score" not in this_df.columns
 
             # Establish sum
