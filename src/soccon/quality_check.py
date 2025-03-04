@@ -5,7 +5,6 @@ import pandas as pd
 from pathlib import Path
 from datetime import date, datetime
 from forest.jasmine.traj2stats import Frequency, gps_stats_main
-from forest.sycamore.base import compute_survey_stats
 from soccon.gps import find_max_cont_days, date_series_to_str
 from soccon.utils import disp_run_info
 from soccon.survey import BeiweSurvey
@@ -101,48 +100,38 @@ def quality_check(data_dir, subject_id, survey_key_path, skip_gps_stats):
             participant_ids=[subject_id],
         )
 
-    gps_summary_df = pd.read_csv(
-        out_dir.joinpath("daily", f"{subject_id}.csv"), na_filter=False
-    )
+    gps_summary_df = pd.read_csv(out_dir.joinpath("daily", f"{subject_id}.csv"))
     n_cont_days_found, day_start, day_end = find_max_cont_days(gps_summary_df)
 
     # Count surveys and assess completion
-    compute_survey_stats(
-        data_dir, out_dir, "America/New_York", include_audio_surveys=False
+    survey_ids = []
+    survey_dates = []
+    survey_times = []
+    survey_flags = []
+    survey_names = []
+    for item in data_dir.joinpath(subject_id, "survey_answers").glob("*/*"):
+        df = pd.read_csv(item)
+        file = item.stem
+        survey_id = item.parent.name
+        sp_ind = file.find(" ")
+
+        survey_ids.append(survey_id)
+        survey_dates.append(file[0:sp_ind])
+        survey_times.append(file[sp_ind + 1 : file.find("+")])
+        survey_flags.append("NO_ANSWER_SELECTED" in df.values)
+        survey_names.append(
+            survey_key[survey_id]["name"] if survey_id in survey_key.columns else None
+        )
+
+    survey_summary_df = pd.DataFrame(
+        {
+            "survey_id": survey_ids,
+            "survey_name": survey_names,
+            "date": survey_dates,
+            "time": survey_times,
+            "check_this_file": survey_flags,
+        }
     )
-    survey_submits_path = out_dir.joinpath("summaries", "submits_only.csv")
-    survey_df = pd.read_csv(survey_submits_path)
-    survey_summary_df = survey_df["survey id"].value_counts().reset_index()
-
-    # Add use name
-    survey_summary_df["survey_name"] = [
-        survey_key[id]["name"] if id in survey_key.columns else None
-        for id in survey_df["survey id"]
-    ]
-
-    # Determine if survey was completed or only started
-    survey_dir_names = [
-        file.name for file in data_dir.joinpath(subject_id, "survey_answers").iterdir()
-    ]
-    survey_summary_df["completed"] = [
-        id in survey_dir_names for id in survey_summary_df["survey id"]
-    ]
-
-    for file in out_dir.joinpath("by_survey").iterdir():
-        this_id = file.stem
-        this_ind = survey_summary_df["survey id"] == this_id
-        this_row = survey_summary_df.loc[this_ind]
-        df = pd.read_csv(file, na_filter=False)
-        if not this_row.empty and not this_row.completed.item():
-            survey_summary_df.loc[this_ind, "check_this_file"] = None
-            survey_summary_df.loc[this_ind, "count"] = None
-        else:
-            survey_summary_df.loc[this_ind, "check_this_file"] = (
-                "NO_ANSWER_SELECTED" in df.values
-            )
-
-    # Move count column to end
-    survey_summary_df["count"] = survey_summary_df.pop("count")
 
     gps_info_df = pd.DataFrame(
         {
