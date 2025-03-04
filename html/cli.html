@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey &mdash; SocialConnectedness  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Main" href="soccon.main.html" />
+    <link rel="prev" title="SocialConnectedness documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SocialConnectedness
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#acoustic">Acoustic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#gps">GPS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#other">Other</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#quality-check">Quality Check</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="soccon.main.html">Main</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.survey.html">Surveys</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.acoustic.html">Acoustic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.gps.html">GPS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="soccon.utils.html">Utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SocialConnectedness</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Survey</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cli.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="survey">
+<h1>Survey<a class="headerlink" href="#survey" title="Link to this heading"></a></h1>
+<p><em><code class="docutils literal notranslate"><span class="pre">process_survey</span></code></em>:</p>
+<p>Create a cleaned and scored copy of all survey CSVs in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> saved in <code class="docutils literal notranslate"><span class="pre">out_dir</span></code> by survey ID</p>
+<ul class="simple">
+<li><p>-d, --data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>-k, --key_path:<br />
+Path to Excel file containing survey scoring rules</p></li>
+<li><p>--subject_ids (optional):<br />
+List of subject IDs to process. If nothing is provided, all subjects in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> will be used</p></li>
+<li><p>--survey_ids (optional):<br />
+List of survey IDs to process. If nothing is provided, all surveys in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> will be used</p></li>
+<li><p>--skip_dirs (optional):<br />
+List of directory names to skip when looking for data. Only use the dir name, not the full path</p></li>
+<li><p>--use_zips (optional):<br />
+Flag to process CSVs in zip files within <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>. Defaults to False</p></li>
+<li><p>--only_redcap (optional):<br />
+Flag to only process redcap data. Mutually exclusive with <code class="docutils literal notranslate"><span class="pre">only_beiwe</span></code>. Defaults to False</p></li>
+<li><p>--only_beiwe (optional):<br />
+Flag to only process beiwe data. Mutually exclusive with <code class="docutils literal notranslate"><span class="pre">only_redcap</span></code>. Defaults to False</p></li>
+</ul>
+<p><em><code class="docutils literal notranslate"><span class="pre">aggregate_survey</span></code></em>:</p>
+<p>Take all data processed by <code class="docutils literal notranslate"><span class="pre">process_survey</span></code> and create a summary Excel doc saved to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.
+First tab is a data summary, second tab is a basic statistics summary,
+remaining tabs contain detailed scoring for each individual survey</p>
+<ul class="simple">
+<li><p>-d, --data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>-k, --key_path:<br />
+Path to Excel file containing survey scoring rules</p></li>
+<li><p>--out_name (optional):<br />
+Name of output file. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;SURVEY_SUMMARY&quot;</span></code></p></li>
+</ul>
+</section>
+<section id="acoustic">
+<h1>Acoustic<a class="headerlink" href="#acoustic" title="Link to this heading"></a></h1>
+<p><em><code class="docutils literal notranslate"><span class="pre">aggregate_acoustic</span></code></em>:</p>
+<p>Collects acoustic data in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>
+(processed externally in SPA) into a summary sheet in <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p>
+<ul class="simple">
+<li><p>-d, --data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--subject_ids (optional):<br />
+Subjects whose data should be analyzed. If nothing is provided, all subjects in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> will be used</p></li>
+<li><p>--out_name (optional):<br />
+Name of the summary file. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;ACOUSTIC_SUMMARY&quot;</span></code></p></li>
+</ul>
+</section>
+<section id="gps">
+<h1>GPS<a class="headerlink" href="#gps" title="Link to this heading"></a></h1>
+<p><em><code class="docutils literal notranslate"><span class="pre">process_gps</span></code></em>:</p>
+<p>Runs forest.jasmine’s GPS analysis with some user interaction and additional helpful info printed</p>
+<ul class="simple">
+<li><p>-d, --data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--subject_ids (optional):<br />
+Subjects whose data should be analyzed. If nothing is provided, all subjects in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> will be used</p></li>
+<li><p>--quality_thresh (optional):<br />
+Data quality threshold. Defaults to <code class="docutils literal notranslate"><span class="pre">0.05</span></code></p></li>
+</ul>
+<p><em><code class="docutils literal notranslate"><span class="pre">aggregate_gps</span></code></em>:</p>
+<p>Collects data from <code class="docutils literal notranslate"><span class="pre">process_gps</span></code> in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> into a summary sheet in <code class="docutils literal notranslate"><span class="pre">out_dir</span></code></p>
+<ul class="simple">
+<li><p>-d, --data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--out_name (optional):<br />
+Name of the summary file. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;GPS_SUMMARY&quot;</span></code></p></li>
+</ul>
+</section>
+<section id="other">
+<h1>Other<a class="headerlink" href="#other" title="Link to this heading"></a></h1>
+<p><em><code class="docutils literal notranslate"><span class="pre">combine_summaries</span></code></em>:</p>
+<p>Combines summary sheets into single sheet</p>
+<ul class="simple">
+<li><p>-o, --out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--acoustic_path (optional):<br />
+Path to acoustic summary file. Defaults to “”</p></li>
+<li><p>--gps_path (optional):<br />
+Path to gps summary file. Defaults to “”</p></li>
+<li><p>--survey_path (optional):<br />
+Path to survey summary file. Defaults to “”</p></li>
+<li><p>--out_name (optional):<br />
+Name of output file. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;COMBINED_SUMMARY&quot;</span></code></p></li>
+</ul>
+</section>
+<section id="quality-check">
+<h1>Quality Check<a class="headerlink" href="#quality-check" title="Link to this heading"></a></h1>
+<p><em><code class="docutils literal notranslate"><span class="pre">make_key</span></code></em>:</p>
+<p>Builds and saves a keyring file used as a key to download data from Beiwe servers</p>
+<ul class="simple">
+<li><p>--username:<br />
+Beiwe username</p></li>
+<li><p>--beiwe_pw:<br />
+Beiwe password</p></li>
+<li><p>--access_key:<br />
+Public access key obtained from Beiwe server</p></li>
+<li><p>--secret_key:<br />
+Secret access key obtained from Beiwe server</p></li>
+<li><p>--out_path:<br />
+Path to directory into which key will be saved</p></li>
+<li><p>--beiwe_code_path<br />
+Path to <a class="reference external" href="https://github.com/onnela-lab/beiwe">this</a> cloned repository</p></li>
+<li><p>--file_pw,<br />
+Password with which to encrypt the file</p></li>
+<li><p>--url,
+Url to Beiwe server. Defaults to: https://studies.beiwe.org</p></li>
+</ul>
+<p><em><code class="docutils literal notranslate"><span class="pre">download_and_check</span></code></em>:</p>
+<p>Runs <code class="docutils literal notranslate"><span class="pre">download_beiwe_data</span></code> and <code class="docutils literal notranslate"><span class="pre">quality_check</span></code> for all subject ids provided</p>
+<ul class="simple">
+<li><p>--keyring_path:<br />
+Path to keyring file generated by <code class="docutils literal notranslate"><span class="pre">make_key</span></code></p></li>
+<li><p>--keyring_pw:<br />
+Password for the keyring file</p></li>
+<li><p>--study_id:<br />
+Beiwe study ID</p></li>
+<li><p>--out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--beiwe_ids:<br />
+Beiwe subject IDs’ data to download</p></li>
+<li><p>--beiwe_code_path:<br />
+Path to <a class="reference external" href="https://github.com/onnela-lab/beiwe">this</a> cloned repository</p></li>
+<li><p>--time_start:<br />
+Earliest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, earliest collected data will be used for all subjects</p></li>
+<li><p>--time_end:<br />
+Latest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, current date will be used for all subjects</p></li>
+<li><p>--data_streams:<br />
+Data streams to download.
+Defaults to [“gps”, “survey_timings”, “survey_answers”, “audio_recordings”]</p></li>
+<li><p>--survey_key_path:<br />
+Path to Excel file containing survey scoring rules</p></li>
+<li><p>--skip_gps_stats:<br />
+Flag to skip running GPS processing, as this can sometimes be time-intensive</p></li>
+</ul>
+<p><em><code class="docutils literal notranslate"><span class="pre">download_beiwe_data</span></code></em>:</p>
+<p>Downloads data from Beiwe server into specified directory</p>
+<ul class="simple">
+<li><p>--keyring_path:<br />
+Path to keyring file generated by <code class="docutils literal notranslate"><span class="pre">make_key</span></code></p></li>
+<li><p>--keyring_pw:<br />
+Password for the keyring file</p></li>
+<li><p>--study_id:<br />
+Beiwe study ID</p></li>
+<li><p>--out_dir:<br />
+Path to directory into which data will be saved</p></li>
+<li><p>--beiwe_ids:<br />
+Beiwe subject IDs’ data to download</p></li>
+<li><p>--beiwe_code_path:<br />
+Path to <a class="reference external" href="https://github.com/onnela-lab/beiwe">this</a> cloned repository</p></li>
+<li><p>--time_start:<br />
+Earliest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, earliest collected data will be used for all subjects</p></li>
+<li><p>--time_end:<br />
+Latest date at which to download data. Formatted YYYY-MM-DD.
+If not supplied, current date will be used for all subjects</p></li>
+<li><p>--data_streams:<br />
+Data streams to download.
+Defaults to [“gps”, “survey_timings”, “survey_answers”, “audio_recordings”]</p></li>
+</ul>
+<p><em><code class="docutils literal notranslate"><span class="pre">run_quality_check</span></code></em>:</p>
+<p>Runs a quality check on the data in <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> on <code class="docutils literal notranslate"><span class="pre">subject_id</span></code>
+and outputs the results to <code class="docutils literal notranslate"><span class="pre">data_dir/subject_id_processed/</span></code></p>
+<ul class="simple">
+<li><p>--data_dir:<br />
+Path to root directory where data is stored</p></li>
+<li><p>--subject_id:<br />
+Beiwe ID of subject’s data to check</p></li>
+<li><p>--survey_key_path:<br />
+Path to Excel file containing survey scoring rules</p></li>
+<li><p>--skip_gps_stats:<br />
+Flag to skip running GPS processing, as this can sometimes be time-intensive</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="SocialConnectedness documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="soccon.main.html" class="btn btn-neutral float-right" title="Main" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Nelson Barnett.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
